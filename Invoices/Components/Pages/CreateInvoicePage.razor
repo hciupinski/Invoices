@@ -1,0 +1,289 @@
+@page "/"
+@inject InvoiceService InvoiceService
+@inject InvoiceConfigurationService ConfigService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudText Typo="Typo.h4" Class="mb-4">Create New Invoice</MudText>
+
+<EditForm Model="@_invoice" OnValidSubmit="CreateInvoice">
+    <DataAnnotationsValidator />
+
+    <MudCard Class="mb-4">
+        <MudCardHeader>
+            <MudText Typo="Typo.h6">Invoice Information</MudText>
+        </MudCardHeader>
+        <MudCardContent>
+            <div class="d-flex gap-4">
+                <MudTextField @bind-Value="_invoice.InvoiceNumber" Label="Invoice Number" 
+                              For="@(() => _invoice.InvoiceNumber)" ReadOnly="true" />
+                <MudDatePicker @bind-Date="_invoice.CreationDate" Label="Invoice Date" 
+                              For="@(() => _invoice.CreationDate)" Required="true" />
+            </div>
+            <div class="d-flex gap-4">
+                <MudDatePicker @bind-Date="_invoice.SellDate" Label="Sell Date" 
+                              For="@(() => _invoice.SellDate)" Required="true" />
+                <MudDatePicker @bind-Date="_invoice.PaymentDate" Label="Payment Due Date" 
+                              For="@(() => _invoice.PaymentDate)" Required="true" />
+            </div>
+            <MudTextField @bind-Value="_invoice.PaymentMethod" Label="Payment Method" 
+                         For="@(() => _invoice.PaymentMethod)" Margin="Margin.Dense" />
+        </MudCardContent>
+    </MudCard>
+
+    <MudCard Class="mb-4">
+        <MudCardHeader>
+            <MudText Typo="Typo.h6">Client Information</MudText>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudSelect T="Guid?" Label="Select existing client" @bind-Value="_selectedContractorId" 
+                      For="@(() => _selectedContractorId)" HelperText="Or fill in client details manually below"
+                      OnSelectedItemChanged="ContractorSelected">
+                <MudSelectItem T="Guid?" Value="@(null)">New client</MudSelectItem>
+                @foreach (var contractor in _contractors)
+                {
+                    <MudSelectItem T="Guid?" Value="@contractor.Id">@contractor.Name</MudSelectItem>
+                }
+            </MudSelect>
+
+            <MudTextField @bind-Value="_invoice.ContractorName" Label="Client Name" 
+                         For="@(() => _invoice.ContractorName)" Required="true" />
+            <MudTextField @bind-Value="_invoice.ContractorAddress" Label="Address" 
+                         For="@(() => _invoice.ContractorAddress)" Required="true" />
+            <div class="d-flex gap-4">
+                <MudTextField @bind-Value="_invoice.ContractorCity" Label="City" 
+                             For="@(() => _invoice.ContractorCity)" Required="true" />
+                <MudTextField @bind-Value="_invoice.ContractorZipCode" Label="Zip/Postal Code" 
+                             For="@(() => _invoice.ContractorZipCode)" Required="true" />
+            </div>
+            <MudTextField @bind-Value="_invoice.ContractorCountry" Label="Country" 
+                         For="@(() => _invoice.ContractorCountry)" Required="true" />
+            <MudTextField @bind-Value="_invoice.ContractorTaxId" Label="VAT/Tax ID" 
+                         For="@(() => _invoice.ContractorTaxId)" />
+            
+            <MudSwitch @bind-Value="_saveContractor" Label="Save client for future invoices" 
+                      Color="Color.Primary" Class="mt-4" 
+                      Disabled="@(_selectedContractorId != null)" />
+        </MudCardContent>
+    </MudCard>
+
+    <MudCard Class="mb-4">
+        <MudCardHeader>
+            <div class="d-flex justify-space-between align-center">
+                <MudText Typo="Typo.h6">Invoice Items</MudText>
+                <MudButton OnClick="AddNewItem" Variant="Variant.Filled" Color="Color.Primary" 
+                          Size="Size.Small" StartIcon="@Icons.Material.Filled.Add">
+                    Add Item
+                </MudButton>
+            </div>
+        </MudCardHeader>
+        <MudCardContent>
+            @if (_invoice.Items.Count == 0)
+            {
+                <MudAlert Severity="Severity.Info">No items added yet. Click "Add Item" to add your first item.</MudAlert>
+            }
+            else
+            {
+                <MudTable Items="@_invoice.Items" Dense="true" Hover="true" Class="mb-4">
+                    <HeaderContent>
+                        <MudTh>Description</MudTh>
+                        <MudTh>Quantity</MudTh>
+                        <MudTh>Unit</MudTh>
+                        <MudTh>Unit Price</MudTh>
+                        <MudTh>Tax Rate %</MudTh>
+                        <MudTh>Net Value</MudTh>
+                        <MudTh>Gross Value</MudTh>
+                        <MudTh></MudTh>
+                    </HeaderContent>
+                    <RowTemplate Context="item">
+                        <MudTd DataLabel="Description">
+                            <MudTextField @bind-Value="item.Description" Required="true" />
+                        </MudTd>
+                        <MudTd DataLabel="Quantity">
+                            <MudNumericField @bind-Value="item.Quantity" Min="0.001" 
+                                           Format="N3" Required="true" OnBlur="CalculateTotals" />
+                        </MudTd>
+                        <MudTd DataLabel="Unit">
+                            <MudTextField @bind-Value="item.Unit" Required="true" />
+                        </MudTd>
+                        <MudTd DataLabel="Unit Price">
+                            <MudNumericField @bind-Value="item.UnitPrice" Min="0.01" 
+                                           Format="C2" Required="true" OnBlur="CalculateTotals" />
+                        </MudTd>
+                        <MudTd DataLabel="Tax Rate">
+                            <MudNumericField @bind-Value="item.TaxRate" Min="0" Max="100" 
+                                           Format="N2" Required="true" OnBlur="CalculateTotals" />
+                        </MudTd>
+                        <MudTd DataLabel="Net Value">
+                            @item.NetValue.ToString("C2")
+                        </MudTd>
+                        <MudTd DataLabel="Gross Value">
+                            @item.GrossValue.ToString("C2")
+                        </MudTd>
+                        <MudTd>
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" 
+                                          OnClick="@(() => RemoveItem(item))" Size="Size.Small" />
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
+            
+            <MudTextField @bind-Value="_invoice.Notes" Label="Notes" Lines="3" 
+                         For="@(() => _invoice.Notes)" Class="mt-4" />
+        </MudCardContent>
+    </MudCard>
+
+    <MudCard Class="mb-4">
+        <MudCardHeader>
+            <MudText Typo="Typo.h6">Invoice Summary</MudText>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                <tbody>
+                    <tr>
+                        <td>Total Net Value:</td>
+                        <td class="text-right">@_invoice.TotalNetValue.ToString("C2")</td>
+                    </tr>
+                    <tr>
+                        <td>Total Tax Value:</td>
+                        <td class="text-right">@_invoice.TotalTaxValue.ToString("C2")</td>
+                    </tr>
+                    <tr>
+                        <td>Total Gross Value:</td>
+                        <td class="text-right font-weight-bold">@_invoice.TotalGrossValue.ToString("C2")</td>
+                    </tr>
+                </tbody>
+            </MudSimpleTable>
+        </MudCardContent>
+    </MudCard>
+
+    <div class="d-flex justify-space-between mt-4">
+        <MudButton OnClick="ResetForm" Variant="Variant.Outlined" Color="Color.Secondary">Cancel</MudButton>
+        <div>
+            <MudButton OnClick="ShowPreview" Variant="Variant.Outlined" Color="Color.Primary" Class="mx-2">
+                Preview
+            </MudButton>
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">
+                Create Invoice
+            </MudButton>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    private Invoice _invoice = new();
+    private List<Contractor> _contractors = new();
+    private Guid? _selectedContractorId;
+    private bool _saveContractor;
+
+    protected override void OnInitialized()
+    {
+        _invoice = InvoiceService.CreateNewInvoice();
+        _contractors = ConfigService.GetContractors().ToList();
+        CalculateTotals();
+    }
+
+    private void AddNewItem()
+    {
+        var taxRate = _invoice.Items.LastOrDefault()?.TaxRate ?? ConfigService.GetConfiguration().DefaultTaxRate;
+        _invoice.Items.Add(new InvoiceItem { TaxRate = taxRate });
+        CalculateTotals();
+    }
+
+    private void RemoveItem(InvoiceItem item)
+    {
+        _invoice.Items.Remove(item);
+        CalculateTotals();
+    }
+
+    private void CalculateTotals()
+    {
+        _invoice.TotalNetValue = _invoice.Items.Sum(i => i.NetValue);
+        _invoice.TotalTaxValue = _invoice.Items.Sum(i => i.TaxValue);
+        _invoice.TotalGrossValue = _invoice.Items.Sum(i => i.GrossValue);
+        StateHasChanged();
+    }
+
+    private void ContractorSelected(Guid? value)
+    {
+        if (_selectedContractorId == null)
+        {
+            // Clear contractor fields for manual entry
+            _invoice.ContractorName = string.Empty;
+            _invoice.ContractorAddress = string.Empty;
+            _invoice.ContractorCity = string.Empty;
+            _invoice.ContractorZipCode = string.Empty;
+            _invoice.ContractorCountry = string.Empty;
+            _invoice.ContractorTaxId = null;
+            _invoice.ContractorId = null;
+        }
+        else
+        {
+            // Fill in contractor details
+            var contractor = _contractors.FirstOrDefault(c => c.Id == _selectedContractorId);
+            if (contractor != null)
+            {
+                _invoice.ContractorId = contractor.Id;
+                _invoice.ContractorName = contractor.Name;
+                _invoice.ContractorAddress = contractor.Address;
+                _invoice.ContractorCity = contractor.City;
+                _invoice.ContractorZipCode = contractor.ZipCode;
+                _invoice.ContractorCountry = contractor.Country;
+                _invoice.ContractorTaxId = contractor.TaxId;
+            }
+        }
+    }
+
+    private async Task CreateInvoice()
+    {
+        // Save new contractor if requested
+        if (_saveContractor && _selectedContractorId == null)
+        {
+            var contractor = new Contractor
+            {
+                Name = _invoice.ContractorName,
+                Address = _invoice.ContractorAddress,
+                City = _invoice.ContractorCity,
+                ZipCode = _invoice.ContractorZipCode,
+                Country = _invoice.ContractorCountry,
+                TaxId = _invoice.ContractorTaxId
+            };
+            
+            await ConfigService.SaveContractorAsync(contractor);
+            _invoice.ContractorId = contractor.Id;
+            _contractors = ConfigService.GetContractors().ToList();
+        }
+        
+        // Ensure we have at least one item
+        if (_invoice.Items.Count == 0)
+        {
+            Snackbar.Add("Please add at least one item to the invoice", Severity.Warning);
+            return;
+        }
+        
+        // Create the invoice
+        await InvoiceService.CreateInvoiceAsync(_invoice);
+        Snackbar.Add("Invoice created successfully", Severity.Success);
+        
+        // Reset the form for a new invoice
+        _invoice = InvoiceService.CreateNewInvoice();
+        _selectedContractorId = null;
+        _saveContractor = false;
+        CalculateTotals();
+    }
+
+    private void ResetForm()
+    {
+        _invoice = InvoiceService.CreateNewInvoice();
+        _selectedContractorId = null;
+        _saveContractor = false;
+        CalculateTotals();
+    }
+
+    private void ShowPreview()
+    {
+        // This is a placeholder for the preview functionality
+        // It will be implemented later
+        Snackbar.Add("Preview functionality is not implemented yet", Severity.Info);
+    }
+}

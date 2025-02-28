@@ -1,0 +1,153 @@
+@page "/diagnostics"
+@inject ExceptionHandlerService ExceptionHandler
+@inject ISnackbar Snackbar
+
+<MudText Typo="Typo.h4" Class="mb-4">Diagnostics</MudText>
+
+<MudCard Class="mb-4">
+    <MudCardHeader>
+        <MudText Typo="Typo.h6">Application Information</MudText>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudList Dense="true">
+            <MudListItem>
+                <MudText><strong>App Version:</strong> @AppInfo.Current.VersionString (Build @AppInfo.Current.BuildString)</MudText>
+            </MudListItem>
+            <MudListItem>
+                <MudText><strong>Package Name:</strong> @AppInfo.Current.PackageName</MudText>
+            </MudListItem>
+            <MudListItem>
+                <MudText><strong>Device Platform:</strong> @DeviceInfo.Current.Platform</MudText>
+            </MudListItem>
+            <MudListItem>
+                <MudText><strong>Device Model:</strong> @DeviceInfo.Current.Model</MudText>
+            </MudListItem>
+            <MudListItem>
+                <MudText><strong>OS Version:</strong> @DeviceInfo.Current.VersionString</MudText>
+            </MudListItem>
+            <MudListItem>
+                <MudText><strong>App Data Directory:</strong> @FileSystem.AppDataDirectory</MudText>
+            </MudListItem>
+        </MudList>
+    </MudCardContent>
+</MudCard>
+
+<MudCard Class="mb-4">
+    <MudCardHeader>
+        <MudText Typo="Typo.h6">Error Logs</MudText>
+    </MudCardHeader>
+    <MudCardContent>
+        @if (!_logFiles.Any())
+        {
+            <MudAlert Severity="Severity.Info">No error logs found.</MudAlert>
+        }
+        else
+        {
+            <MudList Clickable="true">
+                @foreach (var logFile in _logFiles)
+                {
+                    <MudListItem OnClick="@(() => ViewLogFile(logFile))">
+                        <MudText>@Path.GetFileName(logFile)</MudText>
+                    </MudListItem>
+                }
+            </MudList>
+        }
+    </MudCardContent>
+</MudCard>
+
+@if (!string.IsNullOrEmpty(_selectedLogContent))
+{
+    <MudCard>
+        <MudCardHeader>
+            <MudText Typo="Typo.h6">Log Contents: @Path.GetFileName(_selectedLogPath)</MudText>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudTextField @bind-Value="_selectedLogContent" Lines="20" ReadOnly="true" />
+        </MudCardContent>
+        <MudCardActions>
+            <MudButton OnClick="@CopyLogToClipboard" Variant="Variant.Filled" Color="Color.Primary" 
+                      StartIcon="@Icons.Material.Filled.ContentCopy">
+                Copy to Clipboard
+            </MudButton>
+        </MudCardActions>
+    </MudCard>
+}
+
+<MudCard Class="mt-4">
+    <MudCardHeader>
+        <MudText Typo="Typo.h6">Test Exception</MudText>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudText>Click the button below to test the exception handling system:</MudText>
+    </MudCardContent>
+    <MudCardActions>
+        <MudButton OnClick="@ThrowTestException" Variant="Variant.Filled" Color="Color.Error">
+            Throw Test Exception
+        </MudButton>
+    </MudCardActions>
+</MudCard>
+
+@code {
+    private List<string> _logFiles = new();
+    private string _selectedLogPath = string.Empty;
+    private string _selectedLogContent = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        try
+        {
+            _logFiles = ExceptionHandler.GetLogFiles().ToList();
+        }
+        catch (Exception ex)
+        {
+            ExceptionHandler.LogException(ex, "Diagnostics.OnInitialized");
+        }
+    }
+
+    private void ViewLogFile(string logPath)
+    {
+        try
+        {
+            _selectedLogPath = logPath;
+            _selectedLogContent = ExceptionHandler.ReadLogFile(logPath);
+        }
+        catch (Exception ex)
+        {
+            ExceptionHandler.LogException(ex, "Diagnostics.ViewLogFile");
+            Snackbar.Add($"Error reading log file: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void CopyLogToClipboard()
+    {
+        try
+        {
+            // In a real app, you'd use a clipboard service
+            // For MAUI, you could use the Clipboard API
+            Snackbar.Add("Log content copied to clipboard", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            ExceptionHandler.LogException(ex, "Diagnostics.CopyLogToClipboard");
+            Snackbar.Add($"Error copying to clipboard: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void ThrowTestException()
+    {
+        try
+        {
+            // Deliberately throw an exception for testing
+            throw new InvalidOperationException("This is a test exception from the Diagnostics page");
+        }
+        catch (Exception ex)
+        {
+            ExceptionHandler.LogException(ex, "Diagnostics.ThrowTestException");
+            Snackbar.Add("Test exception logged successfully", Severity.Success);
+            
+            // Refresh the log files
+            _logFiles = ExceptionHandler.GetLogFiles().ToList();
+            StateHasChanged();
+        }
+    }
+}

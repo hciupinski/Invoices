@@ -1,0 +1,56 @@
+@using Invoices.Models
+
+<MudDialog>
+    <DialogContent>
+        <MudContainer Style="max-height: 70vh; overflow-y: scroll">
+            <EditForm Model="@Contractor" OnValidSubmit="Submit">
+                <DataAnnotationsValidator />
+                
+                <MudTextField Label="Name" @bind-Value="Contractor.Name" 
+                             For="@(() => Contractor.Name)" Required="true" />
+                
+                <MudTextField Label="Address" @bind-Value="Contractor.Address" 
+                             For="@(() => Contractor.Address)" Required="true" />
+                
+                <div class="d-flex gap-4">
+                    <MudTextField Label="City" @bind-Value="Contractor.City" 
+                                 For="@(() => Contractor.City)" Required="true" />
+                    
+                    <MudTextField Label="Zip/Postal Code" @bind-Value="Contractor.ZipCode" 
+                                 For="@(() => Contractor.ZipCode)" Required="true" />
+                </div>
+                
+                <MudTextField Label="Country" @bind-Value="Contractor.Country" 
+                             For="@(() => Contractor.Country)" Required="true" />
+                
+                <MudTextField Label="VAT/Tax ID" @bind-Value="Contractor.TaxId" 
+                             For="@(() => Contractor.TaxId)" />
+                
+                <div class="d-flex gap-4">
+                    <MudTextField Label="Phone" @bind-Value="Contractor.Phone" 
+                                 For="@(() => Contractor.Phone)" />
+                    
+                    <MudTextField Label="Email" @bind-Value="Contractor.Email" 
+                                 For="@(() => Contractor.Email)" />
+                </div>
+                
+                <div class="d-flex justify-end mt-4">
+                    <MudButton OnClick="Cancel" Variant="Variant.Outlined" Color="Color.Secondary" Class="mr-2">Cancel</MudButton>
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">
+                        @(IsNew ? "Add" : "Update") Contractor
+                    </MudButton>
+                </div>
+            </EditForm>
+        </MudContainer>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = null!;
+    
+    [Parameter] public Contractor Contractor { get; set; } = new();
+    [Parameter] public bool IsNew { get; set; }
+
+    private void Submit() => MudDialog.Close(DialogResult.Ok(true));
+    private void Cancel() => MudDialog.Cancel();
+}
