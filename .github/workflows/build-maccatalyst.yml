@@ -1,0 +1,37 @@
+name: Build .NET MAUI MacCatalyst
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-maccatalyst:
+    runs-on: macos-latest  # Uses macOS runner
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 9.0.x  # Adjust based on your .NET version
+
+      - name: Install .NET MAUI Workloads
+        run: dotnet workload install maui
+
+      - name: Restore Dependencies
+        run: dotnet restore
+
+      - name: Build MacCatalyst App
+        run: dotnet publish -f net9.0-maccatalyst -c Release -o ./publish
+
+      - name: Upload MacCatalyst Build Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: MacCatalyst-App
+          path: ./publish/*.app
