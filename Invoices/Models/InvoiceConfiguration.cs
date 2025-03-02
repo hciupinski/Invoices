@@ -51,4 +51,8 @@ public class InvoiceConfiguration
 
     [StringLength(20, ErrorMessage = "BIC/SWIFT cannot exceed 20 characters")]
     public string? BankSwift { get; set; }
+    
+    // Invoice storage path
+    [StringLength(500, ErrorMessage = "Storage path cannot exceed 500 characters")]
+    public string InvoicesStoragePath { get; set; } = string.Empty;
 }

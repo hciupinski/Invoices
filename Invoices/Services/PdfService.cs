@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Foundation;
 using Invoices.Models;
+using Microsoft.Extensions.DependencyInjection;
 using QuestPDF.Fluent;
 using QuestPDF.Infrastructure;
 
@@ -27,21 +28,32 @@ public interface IPdfService
 
 public class PdfService : IPdfService
 {
+    private readonly IServiceProvider _serviceProvider;
+
     static PdfService()
     {
         // Set QuestPDF to community license for open-source usage
         QuestPDF.Settings.License = LicenseType.Community;
     }
+
+    public PdfService(IServiceProvider serviceProvider)
+    {
+        _serviceProvider = serviceProvider;
+    }
     
     /// <inheritdoc />
     public async Task<string> GeneratePdfAsync(Invoice invoice, string filePath)
     {
+        // Get invoice configuration service to access stored path
+        var configService = _serviceProvider.GetService<InvoiceConfigurationService>();
+        var config = configService?.GetConfiguration();
+        string storagePath = config?.InvoicesStoragePath ?? 
+                             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Invoices");
+        
         // Create an absolute path if necessary
-        // string absolutePath = Path.IsPathRooted(filePath) 
-        //     ? filePath 
-        //     : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), filePath);
-
-        string absolutePath = Path.Combine("/Users/trebuh/Desktop/Invoices/", filePath);
+        string absolutePath = Path.IsPathRooted(filePath) 
+            ? filePath 
+            : Path.Combine(storagePath, filePath);
         
         // Ensure the directory exists
         string? directory = Path.GetDirectoryName(absolutePath);

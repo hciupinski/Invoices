@@ -1,43 +1,44 @@
 @page "/configuration"
-@using Invoices.Models
-@using Invoices.Services
 @using Invoices.Components.Dialogs
+@using System.Runtime.InteropServices
+@using CommunityToolkit.Maui.Storage
 @inject InvoiceConfigurationService ConfigService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject IFolderPicker FolderPicker
 
 <h1>Invoice Configuration</h1>
 
 <div class="configuration-container">
     <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
-        <MudTabPanel Text="Company Details">
+        <MudTabPanel Text="Szczegóły firmy">
             <EditForm Model="@_configuration" OnValidSubmit="SaveCompanyDetails">
                 <DataAnnotationsValidator />
 
                 <MudCard>
                     <MudCardContent>
-                        <MudTextField Label="Company Name" @bind-Value="_configuration.CompanyName" 
+                        <MudTextField Label="Nazwa firmy" @bind-Value="_configuration.CompanyName" 
                                      For="@(() => _configuration.CompanyName)" Required="true" />
                         
-                        <MudTextField Label="Address" @bind-Value="_configuration.CompanyAddress" 
+                        <MudTextField Label="Adres" @bind-Value="_configuration.CompanyAddress" 
                                      For="@(() => _configuration.CompanyAddress)" Required="true" />
                         
                         <div class="d-flex gap-4">
-                            <MudTextField Label="City" @bind-Value="_configuration.CompanyCity" 
+                            <MudTextField Label="Miasto" @bind-Value="_configuration.CompanyCity" 
                                          For="@(() => _configuration.CompanyCity)" Required="true" />
                             
-                            <MudTextField Label="Zip/Postal Code" @bind-Value="_configuration.CompanyZipCode" 
+                            <MudTextField Label="Kod pocztowy" @bind-Value="_configuration.CompanyZipCode" 
                                          For="@(() => _configuration.CompanyZipCode)" Required="true" />
                         </div>
                         
-                        <MudTextField Label="Country" @bind-Value="_configuration.CompanyCountry" 
+                        <MudTextField Label="Kraj" @bind-Value="_configuration.CompanyCountry" 
                                      For="@(() => _configuration.CompanyCountry)" Required="true" />
                         
-                        <MudTextField Label="VAT/Tax ID" @bind-Value="_configuration.CompanyTaxId" 
+                        <MudTextField Label="NIP" @bind-Value="_configuration.CompanyTaxId" 
                                      For="@(() => _configuration.CompanyTaxId)" />
                         
                         <div class="d-flex gap-4">
-                            <MudTextField Label="Phone" @bind-Value="_configuration.CompanyPhone" 
+                            <MudTextField Label="Telefon" @bind-Value="_configuration.CompanyPhone" 
                                          For="@(() => _configuration.CompanyPhone)" />
                             
                             <MudTextField Label="Email" @bind-Value="_configuration.CompanyEmail" 
@@ -47,40 +48,40 @@
                     
                     <MudCardActions>
                         <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" 
-                                  Color="Color.Primary" Class="ml-auto">Save Company Details</MudButton>
+                                  Color="Color.Primary" Class="ml-auto">Zapisz szczegóły firmy</MudButton>
                     </MudCardActions>
                 </MudCard>
             </EditForm>
         </MudTabPanel>
         
-        <MudTabPanel Text="Tax Settings">
+        <MudTabPanel Text="Ustawienia VAT">
             <EditForm Model="@_configuration" OnValidSubmit="SaveTaxSettings">
                 <DataAnnotationsValidator />
 
                 <MudCard>
                     <MudCardContent>
-                        <MudNumericField Label="Default Tax Rate (%)" @bind-Value="_configuration.DefaultTaxRate"
+                        <MudNumericField Label="Podstawowa stawka VAT (%)" @bind-Value="_configuration.DefaultTaxRate"
                                         For="@(() => _configuration.DefaultTaxRate)" T="decimal" Format="N2" Min="0" Max="100" />
                     </MudCardContent>
                     
                     <MudCardActions>
                         <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" 
-                                  Color="Color.Primary" Class="ml-auto">Save Tax Settings</MudButton>
+                                  Color="Color.Primary" Class="ml-auto">Zapisz szczegóły VAT</MudButton>
                     </MudCardActions>
                 </MudCard>
             </EditForm>
         </MudTabPanel>
         
-        <MudTabPanel Text="Bank Details">
+        <MudTabPanel Text="Szczegóły banku">
             <EditForm Model="@_configuration" OnValidSubmit="SaveBankDetails">
                 <DataAnnotationsValidator />
 
                 <MudCard>
                     <MudCardContent>
-                        <MudTextField Label="Bank Name" @bind-Value="_configuration.BankName" 
+                        <MudTextField Label="Nazwa banku" @bind-Value="_configuration.BankName" 
                                      For="@(() => _configuration.BankName)" />
                         
-                        <MudTextField Label="Account Number" @bind-Value="_configuration.BankAccountNumber" 
+                        <MudTextField Label="Numer konta" @bind-Value="_configuration.BankAccountNumber" 
                                      For="@(() => _configuration.BankAccountNumber)" />
                         
                         <MudTextField Label="IBAN" @bind-Value="_configuration.BankIban" 
@@ -92,35 +93,60 @@
                     
                     <MudCardActions>
                         <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" 
-                                  Color="Color.Primary" Class="ml-auto">Save Bank Details</MudButton>
+                                  Color="Color.Primary" Class="ml-auto">Zapisz szczegóły banku</MudButton>
                     </MudCardActions>
                 </MudCard>
             </EditForm>
         </MudTabPanel>
         
-        <MudTabPanel Text="Contractors">
+        <MudTabPanel Text="Zapis pliku">
+            <EditForm Model="@_configuration" OnValidSubmit="SaveStoragePath">
+                <DataAnnotationsValidator />
+
+                <MudCard>
+                    <MudCardContent>
+                        <MudTextField Label="Ścieżka zapisu pliku" @bind-Value="_configuration.InvoicesStoragePath" 
+                                    For="@(() => _configuration.InvoicesStoragePath)" Required="true" />
+                        
+                        <MudText Typo="Typo.caption" Class="mt-2">
+                            This is the folder where all generated invoices will be saved.
+                        </MudText>
+                        
+                        <MudButton OnClick="@PickFolderAsync" Variant="Variant.Outlined" 
+                                   Color="Color.Primary" Class="mt-4">Szukaj...</MudButton>
+                    </MudCardContent>
+                    
+                    <MudCardActions>
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" 
+                                  Color="Color.Primary" Class="ml-auto">Zapisz miejsce zapisu</MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </EditForm>
+        </MudTabPanel>
+        
+        <MudTabPanel Text="Klienci">
             <MudButton OnClick="@OpenContractorDialog" Variant="Variant.Filled" Color="Color.Primary" 
-                      Class="mb-4">Add New Contractor</MudButton>
+                      Class="mb-4">Dodaj nowego klienta</MudButton>
             
             @if (_contractors.Count == 0)
             {
-                <MudAlert Severity="Severity.Info">No contractors added yet.</MudAlert>
+                <MudAlert Severity="Severity.Info">Brak klientów.</MudAlert>
             }
             else
             {
                 <MudTable Items="@_contractors" Hover="true" Breakpoint="Breakpoint.Sm">
                     <HeaderContent>
-                        <MudTh>Name</MudTh>
-                        <MudTh>Address</MudTh>
-                        <MudTh>Country</MudTh>
-                        <MudTh>Tax ID</MudTh>
-                        <MudTh>Actions</MudTh>
+                        <MudTh>Nazwa</MudTh>
+                        <MudTh>Adres</MudTh>
+                        <MudTh>Kraj</MudTh>
+                        <MudTh>NIP</MudTh>
+                        <MudTh>Akcje</MudTh>
                     </HeaderContent>
                     <RowTemplate>
-                        <MudTd DataLabel="Name">@context.Name</MudTd>
-                        <MudTd DataLabel="Address">@context.Address, @context.City @context.ZipCode</MudTd>
-                        <MudTd DataLabel="Country">@context.Country</MudTd>
-                        <MudTd DataLabel="Tax ID">@context.TaxId</MudTd>
+                        <MudTd DataLabel="Nazwa">@context.Name</MudTd>
+                        <MudTd DataLabel="Adres">@context.Address, @context.City @context.ZipCode</MudTd>
+                        <MudTd DataLabel="Kraj">@context.Country</MudTd>
+                        <MudTd DataLabel="NIP">@context.TaxId</MudTd>
                         <MudTd>
                             <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="@(() => EditContractor(context))" />
                             <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="@(() => DeleteContractor(context))" />
@@ -147,19 +173,150 @@
     private async Task SaveCompanyDetails()
     {
         await ConfigService.SaveConfigurationAsync(_configuration);
-        Snackbar.Add("Company details saved successfully", Severity.Success);
+        Snackbar.Add("Szczegóły firmy zapisane.", Severity.Success);
     }
 
     private async Task SaveTaxSettings()
     {
         await ConfigService.SaveConfigurationAsync(_configuration);
-        Snackbar.Add("Tax settings saved successfully", Severity.Success);
+        Snackbar.Add("Szczegóły VAT zapisane.", Severity.Success);
     }
 
     private async Task SaveBankDetails()
     {
         await ConfigService.SaveConfigurationAsync(_configuration);
-        Snackbar.Add("Bank details saved successfully", Severity.Success);
+        Snackbar.Add("Szczegóły banku zapisane.", Severity.Success);
+    }
+    
+    private void UploadFilesFolder(InputFileChangeEventArgs e)
+    {
+        List<IBrowserFile> files = e.GetMultipleFiles().ToList();
+    }
+
+    private async Task PickFolderAsync()
+    {
+        var folderPickerResult = await FolderPicker.PickAsync(CancellationToken.None);
+        if (folderPickerResult.IsSuccessful)
+        {
+            _configuration.InvoicesStoragePath = folderPickerResult.Folder.Path;
+            Snackbar.Add($"Wybrany folder: {folderPickerResult.Folder.Path}", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add($"Błąd: {folderPickerResult.Exception.Message}", Severity.Error);
+        }
+    }
+    
+    private async Task SaveStoragePath()
+    {
+        // Ensure directory exists
+        try 
+        {
+            if (!Directory.Exists(_configuration.InvoicesStoragePath))
+            {
+                Directory.CreateDirectory(_configuration.InvoicesStoragePath);
+            }
+            
+            await ConfigService.SaveConfigurationAsync(_configuration);
+            Snackbar.Add("Szczegóły miejsca zapisu pliku zapisane.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Błąd: {ex.Message}", Severity.Error);
+        }
+    }
+    
+    private async Task SelectStoragePathAsync()
+    {
+        try
+        {
+            // Platform-specific folder selection
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                // For Windows, we can use a folder browser dialog
+                var folderPath = await ShowFolderDialogWindowsAsync();
+                if (!string.IsNullOrEmpty(folderPath))
+                {
+                    _configuration.InvoicesStoragePath = folderPath;
+                }
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                // For macOS, we'll use a simple dialog approach
+                var folderPath = await ShowFolderDialogMacOSAsync();
+                if (!string.IsNullOrEmpty(folderPath))
+                {
+                    _configuration.InvoicesStoragePath = folderPath;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error selecting folder: {ex.Message}", Severity.Error);
+        }
+    }
+    
+    private async Task<string> ShowFolderDialogWindowsAsync()
+    {
+        // For MAUI on Windows, we can use a dialog to ask the user for a path
+        // This is a simplified approach since we can't directly use Windows.Forms.FolderBrowserDialog
+        var parameters = new DialogParameters
+        {
+            ["Content"] = new RenderFragment(builder =>
+            {
+                builder.OpenComponent<MudTextField<string>>(0);
+                builder.AddAttribute(1, "Value", _configuration.InvoicesStoragePath);
+                builder.AddAttribute(2, "ValueChanged", 
+                    EventCallback.Factory.Create<string>(this, 
+                        path => _configuration.InvoicesStoragePath = path));
+                builder.AddAttribute(3, "Label", "Storage Path");
+                builder.AddAttribute(4, "FullWidth", true);
+                builder.CloseComponent();
+            })
+        };
+    
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small };
+    
+        var dialog = await DialogService.ShowAsync(typeof (Configuration), "Wybierz folder", parameters, options);
+        var result = await dialog.Result;
+    
+        if (!result.Canceled && result.Data is string selectedPath)
+        {
+            return selectedPath;
+        }
+    
+        return string.Empty; // Return empty if canceled
+    }
+    
+    private async Task<string> ShowFolderDialogMacOSAsync()
+    {
+        // For macOS, we can use a dialog to ask the user for a path
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small };
+    
+        var parameters = new DialogParameters
+        {
+            ["Content"] = new RenderFragment(builder =>
+            {
+                builder.OpenComponent<MudTextField<string>>(0);
+                builder.AddAttribute(1, "Value", _configuration.InvoicesStoragePath);
+                builder.AddAttribute(2, "ValueChanged", 
+                    EventCallback.Factory.Create<string>(this, 
+                        path => _configuration.InvoicesStoragePath = path));
+                builder.AddAttribute(3, "Label", "Storage Path");
+                builder.AddAttribute(4, "FullWidth", true);
+                builder.CloseComponent();
+            })
+        };
+    
+        var dialog = await DialogService.ShowAsync(typeof (Configuration), "Select Folder", parameters, options);
+        var result = await dialog.Result;
+    
+        if (!result.Canceled && result.Data is string selectedPath)
+        {
+            return selectedPath;
+        }
+    
+        return _configuration.InvoicesStoragePath;
     }
 
     private async Task OpenContractorDialog()

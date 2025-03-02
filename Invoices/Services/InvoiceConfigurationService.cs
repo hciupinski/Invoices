@@ -20,6 +20,21 @@ public class InvoiceConfigurationService
         
         LoadConfiguration();
         LoadContractors();
+        
+        // Set default invoices storage path if it's not set
+        if (string.IsNullOrEmpty(_configuration.InvoicesStoragePath))
+        {
+            _configuration.InvoicesStoragePath = GetDefaultInvoicesPath();
+            SaveConfigurationAsync(_configuration).GetAwaiter().GetResult();
+        }
+    }
+    
+    private string GetDefaultInvoicesPath()
+    {
+        return Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), 
+            "Invoices"
+        );
     }
 
     public InvoiceConfiguration GetConfiguration() => _configuration;

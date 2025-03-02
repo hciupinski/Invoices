@@ -4,7 +4,7 @@
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
-<MudText Typo="Typo.h4" Class="mb-4">Invoices</MudText>
+<MudText Typo="Typo.h4" Class="mb-4">Faktury</MudText>
 
 @if (_invoices == null)
 {
@@ -12,48 +12,48 @@
 }
 else if (!_invoices.Any())
 {
-    <MudAlert Severity="Severity.Info">No invoices have been created yet.</MudAlert>
+    <MudAlert Severity="Severity.Info">Brak utworzonych faktur.</MudAlert>
 }
 else
 {
     <MudPaper Class="pa-4 mb-4" Elevation="2">
-        <MudTextField @bind-Value="_searchString" Placeholder="Search invoices" Adornment="Adornment.Start"
+        <MudTextField @bind-Value="_searchString" Placeholder="Szukaj faktury.." Adornment="Adornment.Start"
                      AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0 mb-3" />
         
         <MudTable Items="@_filteredInvoices" Dense="true" Hover="true" Bordered="true" Striped="true"
                  OnRowClick="OnRowClick" T="Invoice" Class="mb-3">
             <HeaderContent>
-                <MudTh>Invoice Number</MudTh>
-                <MudTh>Creation Date</MudTh>
-                <MudTh>Client</MudTh>
-                <MudTh>Total Amount</MudTh>
+                <MudTh>Numer faktury</MudTh>
+                <MudTh>Data utworzenia</MudTh>
+                <MudTh>Klient</MudTh>
+                <MudTh>Kwota</MudTh>
                 <MudTh>Status</MudTh>
                 <MudTh></MudTh>
             </HeaderContent>
             <RowTemplate>
-                <MudTd DataLabel="Invoice Number">@context.InvoiceNumber</MudTd>
-                <MudTd DataLabel="Creation Date">@context.CreationDate?.ToShortDateString()</MudTd>
-                <MudTd DataLabel="Client">@context.ContractorName</MudTd>
-                <MudTd DataLabel="Total Amount">@context.TotalGrossValue.ToString("C2", _culture)</MudTd>
+                <MudTd DataLabel="Numer faktury">@context.InvoiceNumber</MudTd>
+                <MudTd DataLabel="Data utworzenia">@context.CreationDate?.ToShortDateString()</MudTd>
+                <MudTd DataLabel="Klient">@context.ContractorName</MudTd>
+                <MudTd DataLabel="Kwota">@context.TotalGrossValue.ToString("C2", _culture)</MudTd>
                 <MudTd DataLabel="Status">
                     @if (context.IsPaid)
                     {
-                        <MudChip Color="Color.Success" Size="Size.Small">Paid</MudChip>
+                        <MudChip Color="Color.Success" Size="Size.Small">Zapłacone</MudChip>
                     }
                     else if (context.PaymentDate < DateTime.Now)
                     {
-                        <MudChip Color="Color.Error" Size="Size.Small">Overdue</MudChip>
+                        <MudChip Color="Color.Error" Size="Size.Small">Termin przekroczony</MudChip>
                     }
                     else
                     {
-                        <MudChip Color="Color.Warning" Size="Size.Small">Pending</MudChip>
+                        <MudChip Color="Color.Warning" Size="Size.Small">W trakcie</MudChip>
                     }
                 </MudTd>
                 <MudTd>
                     <MudMenu Icon="@Icons.Material.Filled.MoreVert" AnchorOrigin="Origin.BottomRight">
-                        <MudMenuItem OnClick="@(() => ViewInvoice(context))">Edit</MudMenuItem>
-                        <MudMenuItem OnClick="@(() => PreviewInvoice(context))">Preview</MudMenuItem>
-                        <MudMenuItem OnClick="@(() => GeneratePdf(context))">Generate PDF</MudMenuItem>
+                        <MudMenuItem OnClick="@(() => ViewInvoice(context))">Edytuj</MudMenuItem>
+                        <MudMenuItem OnClick="@(() => PreviewInvoice(context))">Podgląd</MudMenuItem>
+                        <MudMenuItem OnClick="@(() => GeneratePdf(context))">Wygeneruj PDF</MudMenuItem>
                     </MudMenu>
                 </MudTd>
             </RowTemplate>
@@ -68,15 +68,15 @@ else
             <DataAnnotationsValidator />
             
             <div class="d-flex justify-space-between align-center mb-4">
-                <MudText Typo="Typo.h5">Invoice Details</MudText>
+                <MudText Typo="Typo.h5">Szczegóły faktury</MudText>
                 <div>
                     <MudButton OnClick="@(() => PreviewInvoice(_selectedInvoice))" 
                               Variant="Variant.Outlined" Color="Color.Primary" Class="mx-2">
-                        Preview
+                        Podgląd
                     </MudButton>
                     <MudButton OnClick="@(() => GeneratePdf(_selectedInvoice))" 
                               Variant="Variant.Outlined" Color="Color.Primary" Class="mx-2">
-                        Generate PDF
+                        Wygeneruj PDF
                     </MudButton>
                     <MudButton ButtonType="ButtonType.Submit" 
                               Variant="Variant.Filled" Color="Color.Primary" 
@@ -84,46 +84,46 @@ else
                         @if (_isProcessing)
                         {
                             <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" />
-                            <span>Saving...</span>
+                            <span>W trakcie zapisu...</span>
                         }
                         else
                         {
-                            <span>Save Changes</span>
+                            <span>Zapisz zmiany</span>
                         }
                     </MudButton>
                 </div>
             </div>
 
             <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-4">
-                <MudTabPanel Text="Basic Information">
+                <MudTabPanel Text="Podstawowe informacje">
                     <MudGrid>
                         <MudItem xs="12" md="6">
                             <MudCard Class="mb-4">
                                 <MudCardHeader>
-                                    <MudText Typo="Typo.h6">Invoice Information</MudText>
+                                    <MudText Typo="Typo.h6">Podstawowe informacje</MudText>
                                 </MudCardHeader>
                                 <MudCardContent>
                                     <div class="d-flex gap-4">
-                                        <MudTextField @bind-Value="_selectedInvoice.InvoiceNumber" Label="Invoice Number" 
+                                        <MudTextField @bind-Value="_selectedInvoice.InvoiceNumber" Label="Numer faktury" 
                                                     For="@(() => _selectedInvoice.InvoiceNumber)" ReadOnly="true" />
-                                        <MudDatePicker @bind-Date="_selectedInvoice.CreationDate" Label="Invoice Date" 
+                                        <MudDatePicker @bind-Date="_selectedInvoice.CreationDate" Label="Data wystawienia" 
                                                     For="@(() => _selectedInvoice.CreationDate)" Required="true" />
                                     </div>
                                     <div class="d-flex gap-4">
-                                        <MudDatePicker @bind-Date="_selectedInvoice.SellDate" Label="Sell Date" 
+                                        <MudDatePicker @bind-Date="_selectedInvoice.SellDate" Label="Data sprzedaży" 
                                                     For="@(() => _selectedInvoice.SellDate)" Required="true" />
-                                        <MudDatePicker @bind-Date="_selectedInvoice.PaymentDate" Label="Payment Due Date" 
+                                        <MudDatePicker @bind-Date="_selectedInvoice.PaymentDate" Label="Termin płatności" 
                                                     For="@(() => _selectedInvoice.PaymentDate)" Required="true" />
                                     </div>
-                                    <MudTextField @bind-Value="_selectedInvoice.PaymentMethod" Label="Payment Method" 
+                                    <MudTextField @bind-Value="_selectedInvoice.PaymentMethod" Label="Metoda płatności" 
                                                 For="@(() => _selectedInvoice.PaymentMethod)" Margin="Margin.Dense" />
                                     
                                     <div class="d-flex gap-4 mt-4">
-                                        <MudCheckBox @bind-Checked="_selectedInvoice.IsPaid" Label="Invoice Paid" 
+                                        <MudCheckBox @bind-Checked="_selectedInvoice.IsPaid" Label="Status faktury" 
                                                   Color="Color.Primary" />
                                         @if (_selectedInvoice.IsPaid)
                                         {
-                                            <MudDatePicker @bind-Date="_selectedInvoice.PaidDate" Label="Paid Date" />
+                                            <MudDatePicker @bind-Date="_selectedInvoice.PaidDate" Label="Termin płatności" />
                                         }
                                     </div>
                                 </MudCardContent>
@@ -133,22 +133,22 @@ else
                         <MudItem xs="12" md="6">
                             <MudCard Class="mb-4">
                                 <MudCardHeader>
-                                    <MudText Typo="Typo.h6">Client Information</MudText>
+                                    <MudText Typo="Typo.h6">Informacje o kliencie</MudText>
                                 </MudCardHeader>
                                 <MudCardContent>
-                                    <MudTextField @bind-Value="_selectedInvoice.ContractorName" Label="Client Name" 
+                                    <MudTextField @bind-Value="_selectedInvoice.ContractorName" Label="Nazwa klienta" 
                                                 For="@(() => _selectedInvoice.ContractorName)" Required="true" />
-                                    <MudTextField @bind-Value="_selectedInvoice.ContractorAddress" Label="Address" 
+                                    <MudTextField @bind-Value="_selectedInvoice.ContractorAddress" Label="Adres" 
                                                 For="@(() => _selectedInvoice.ContractorAddress)" Required="true" />
                                     <div class="d-flex gap-4">
-                                        <MudTextField @bind-Value="_selectedInvoice.ContractorCity" Label="City" 
+                                        <MudTextField @bind-Value="_selectedInvoice.ContractorCity" Label="Miasto" 
                                                     For="@(() => _selectedInvoice.ContractorCity)" Required="true" />
-                                        <MudTextField @bind-Value="_selectedInvoice.ContractorZipCode" Label="Zip/Postal Code" 
+                                        <MudTextField @bind-Value="_selectedInvoice.ContractorZipCode" Label="Kod pocztowy" 
                                                     For="@(() => _selectedInvoice.ContractorZipCode)" Required="true" />
                                     </div>
-                                    <MudTextField @bind-Value="_selectedInvoice.ContractorCountry" Label="Country" 
+                                    <MudTextField @bind-Value="_selectedInvoice.ContractorCountry" Label="Kraj" 
                                                 For="@(() => _selectedInvoice.ContractorCountry)" Required="true" />
-                                    <MudTextField @bind-Value="_selectedInvoice.ContractorTaxId" Label="VAT/Tax ID" 
+                                    <MudTextField @bind-Value="_selectedInvoice.ContractorTaxId" Label="NIP" 
                                                 For="@(() => _selectedInvoice.ContractorTaxId)" />
                                 </MudCardContent>
                             </MudCard>
@@ -156,58 +156,58 @@ else
                     </MudGrid>
                 </MudTabPanel>
                 
-                <MudTabPanel Text="Invoice Items">
+                <MudTabPanel Text="Pozycje">
                     <MudCard>
                         <MudCardHeader>
                             <div class="d-flex justify-space-between align-center w-100">
-                                <MudText Typo="Typo.h6">Invoice Items</MudText>
+                                <MudText Typo="Typo.h6">Pozycje</MudText>
                                 <MudButton OnClick="AddNewItem" Variant="Variant.Filled" Color="Color.Primary" 
                                          Size="Size.Small" StartIcon="@Icons.Material.Filled.Add">
-                                    Add Item
+                                    Dodaj pozycję
                                 </MudButton>
                             </div>
                         </MudCardHeader>
                         <MudCardContent>
                             @if (_selectedInvoice.Items.Count == 0)
                             {
-                                <MudAlert Severity="Severity.Info">No items added yet. Click "Add Item" to add your first item.</MudAlert>
+                                <MudAlert Severity="Severity.Info">Brak pozycji. Click "Add Item" to add your first item.</MudAlert>
                             }
                             else
                             {
                                 <MudTable Items="@_selectedInvoice.Items" Dense="true" Hover="true" Class="mb-4">
                                     <HeaderContent>
-                                        <MudTh>Description</MudTh>
-                                        <MudTh>Quantity</MudTh>
-                                        <MudTh>Unit</MudTh>
-                                        <MudTh>Unit Price</MudTh>
-                                        <MudTh>Tax Rate %</MudTh>
-                                        <MudTh>Net Value</MudTh>
-                                        <MudTh>Gross Value</MudTh>
+                                        <MudTh>Opis</MudTh>
+                                        <MudTh>Ilość</MudTh>
+                                        <MudTh>Jednostka</MudTh>
+                                        <MudTh>Cena jednostkowa</MudTh>
+                                        <MudTh>Stawka VAT %</MudTh>
+                                        <MudTh>Kwota netto</MudTh>
+                                        <MudTh>Kwota brutto</MudTh>
                                         <MudTh></MudTh>
                                     </HeaderContent>
                                     <RowTemplate Context="item">
-                                        <MudTd DataLabel="Description">
+                                        <MudTd DataLabel="Opis">
                                             <MudTextField @bind-Value="item.Description" Required="true" />
                                         </MudTd>
-                                        <MudTd DataLabel="Quantity">
+                                        <MudTd DataLabel="Ilośc">
                                             <MudNumericField @bind-Value="item.Quantity" Min="0.001M"
                                                          Format="N3" Required="true" OnBlur="CalculateTotals" />
                                         </MudTd>
-                                        <MudTd DataLabel="Unit">
+                                        <MudTd DataLabel="Jednostka">
                                             <MudTextField @bind-Value="item.Unit" Required="true" />
                                         </MudTd>
-                                        <MudTd DataLabel="Unit Price">
+                                        <MudTd DataLabel="Cena jednostkowa">
                                             <MudNumericField @bind-Value="item.UnitPrice" Min="0.01M" Culture="_culture"
                                                          Format="C2" Required="true" OnBlur="CalculateTotals" />
                                         </MudTd>
-                                        <MudTd DataLabel="Tax Rate">
+                                        <MudTd DataLabel="Stawka VAT">
                                             <MudNumericField @bind-Value="item.TaxRate" Min="0" Max="100" Culture="_culture"
                                                          Format="N2" Required="true" OnBlur="CalculateTotals" />
                                         </MudTd>
-                                        <MudTd DataLabel="Net Value">
+                                        <MudTd DataLabel="Kwota netto">
                                             @item.NetValue.ToString("C2", _culture)
                                         </MudTd>
-                                        <MudTd DataLabel="Gross Value">
+                                        <MudTd DataLabel="Kwota brutton">
                                             @item.GrossValue.ToString("C2", _culture)
                                         </MudTd>
                                         <MudTd>
@@ -220,59 +220,59 @@ else
                                 <MudSimpleTable Dense="true" Hover="true" Striped="true" Style="width: 300px; margin-left: auto;">
                                     <tbody>
                                         <tr>
-                                            <td>Total Net Value:</td>
+                                            <td>Całkowita kwota netto:</td>
                                             <td class="text-right">@_selectedInvoice.TotalNetValue.ToString("C2", _culture)</td>
                                         </tr>
                                         <tr>
-                                            <td>Total Tax Value:</td>
+                                            <td>Całkowita kwota VAT:</td>
                                             <td class="text-right">@_selectedInvoice.TotalTaxValue.ToString("C2", _culture)</td>
                                         </tr>
                                         <tr>
-                                            <td>Total Gross Value:</td>
+                                            <td>Całkowita kwota brutto:</td>
                                             <td class="text-right font-weight-bold">@_selectedInvoice.TotalGrossValue.ToString("C2", _culture)</td>
                                         </tr>
                                     </tbody>
                                 </MudSimpleTable>
                             }
                             
-                            <MudTextField @bind-Value="_selectedInvoice.Notes" Label="Notes" Lines="3" 
+                            <MudTextField @bind-Value="_selectedInvoice.Notes" Label="Opis" Lines="3" 
                                        For="@(() => _selectedInvoice.Notes)" Class="mt-4" />
                         </MudCardContent>
                     </MudCard>
                 </MudTabPanel>
                 
-                <MudTabPanel Text="Company Details">
+                <MudTabPanel Text="Szczegóły firmy">
                     <MudCard>
                         <MudCardHeader>
-                            <MudText Typo="Typo.h6">Company Information</MudText>
+                            <MudText Typo="Typo.h6">Szczegóły firmy</MudText>
                         </MudCardHeader>
                         <MudCardContent>
                             <MudGrid>
                                 <MudItem xs="12" md="6">
-                                    <MudTextField @bind-Value="_selectedInvoice.CompanyName" Label="Company Name" 
+                                    <MudTextField @bind-Value="_selectedInvoice.CompanyName" Label="Nazwa firmy" 
                                                 For="@(() => _selectedInvoice.CompanyName)" Required="true" />
-                                    <MudTextField @bind-Value="_selectedInvoice.CompanyAddress" Label="Address" 
+                                    <MudTextField @bind-Value="_selectedInvoice.CompanyAddress" Label="Adres" 
                                                 For="@(() => _selectedInvoice.CompanyAddress)" Required="true" />
                                     <div class="d-flex gap-4">
-                                        <MudTextField @bind-Value="_selectedInvoice.CompanyCity" Label="City" 
+                                        <MudTextField @bind-Value="_selectedInvoice.CompanyCity" Label="Miasto" 
                                                     For="@(() => _selectedInvoice.CompanyCity)" Required="true" />
-                                        <MudTextField @bind-Value="_selectedInvoice.CompanyZipCode" Label="Zip/Postal Code" 
+                                        <MudTextField @bind-Value="_selectedInvoice.CompanyZipCode" Label="Kod pocztowy" 
                                                     For="@(() => _selectedInvoice.CompanyZipCode)" Required="true" />
                                     </div>
-                                    <MudTextField @bind-Value="_selectedInvoice.CompanyCountry" Label="Country" 
+                                    <MudTextField @bind-Value="_selectedInvoice.CompanyCountry" Label="Kraj" 
                                                 For="@(() => _selectedInvoice.CompanyCountry)" Required="true" />
-                                    <MudTextField @bind-Value="_selectedInvoice.CompanyTaxId" Label="VAT/Tax ID" 
+                                    <MudTextField @bind-Value="_selectedInvoice.CompanyTaxId" Label="NIP" 
                                                 For="@(() => _selectedInvoice.CompanyTaxId)" />
                                 </MudItem>
                                 
                                 <MudItem xs="12" md="6">
-                                    <MudTextField @bind-Value="_selectedInvoice.CompanyPhone" Label="Phone" 
+                                    <MudTextField @bind-Value="_selectedInvoice.CompanyPhone" Label="Telefon" 
                                                 For="@(() => _selectedInvoice.CompanyPhone)" />
                                     <MudTextField @bind-Value="_selectedInvoice.CompanyEmail" Label="Email" 
                                                 For="@(() => _selectedInvoice.CompanyEmail)" />
-                                    <MudTextField @bind-Value="_selectedInvoice.BankName" Label="Bank Name" 
+                                    <MudTextField @bind-Value="_selectedInvoice.BankName" Label="Nazwa banku" 
                                                 For="@(() => _selectedInvoice.BankName)" />
-                                    <MudTextField @bind-Value="_selectedInvoice.BankAccountNumber" Label="Account Number" 
+                                    <MudTextField @bind-Value="_selectedInvoice.BankAccountNumber" Label="Numer konta" 
                                                 For="@(() => _selectedInvoice.BankAccountNumber)" />
                                     <MudTextField @bind-Value="_selectedInvoice.BankIban" Label="IBAN" 
                                                 For="@(() => _selectedInvoice.BankIban)" />

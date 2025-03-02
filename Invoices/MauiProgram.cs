@@ -3,6 +3,8 @@ using Invoices.Services;
 using MudBlazor;
 using MudBlazor.Services;
 using System.Diagnostics;
+using CommunityToolkit.Maui;
+using CommunityToolkit.Maui.Storage;
 using Foundation;
 
 namespace Invoices;
@@ -13,6 +15,7 @@ public static class MauiProgram
     {
         var builder = MauiApp.CreateBuilder();
         builder
+            .UseMauiCommunityToolkit()
             .UseMauiApp<App>()
             .ConfigureFonts(fonts => { fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular"); });
 
@@ -37,6 +40,8 @@ public static class MauiProgram
         builder.Services.AddSingleton<InvoiceService>();
         builder.Services.AddSingleton<ExceptionHandlerService>();
         builder.Services.AddSingleton<IPdfService, PdfService>();
+        
+        builder.Services.AddSingleton<IFolderPicker>(FolderPicker.Default);
 
         // Advanced logging configuration to capture all details
         ConfigureLogging(builder);
