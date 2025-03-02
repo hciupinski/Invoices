@@ -1,0 +1,397 @@
+@page "/invoices"
+@using System.Globalization
+@inject InvoiceService InvoiceService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudText Typo="Typo.h4" Class="mb-4">Invoices</MudText>
+
+@if (_invoices == null)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else if (!_invoices.Any())
+{
+    <MudAlert Severity="Severity.Info">No invoices have been created yet.</MudAlert>
+}
+else
+{
+    <MudPaper Class="pa-4 mb-4" Elevation="2">
+        <MudTextField @bind-Value="_searchString" Placeholder="Search invoices" Adornment="Adornment.Start"
+                     AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0 mb-3" />
+        
+        <MudTable Items="@_filteredInvoices" Dense="true" Hover="true" Bordered="true" Striped="true"
+                 OnRowClick="OnRowClick" T="Invoice" Class="mb-3">
+            <HeaderContent>
+                <MudTh>Invoice Number</MudTh>
+                <MudTh>Creation Date</MudTh>
+                <MudTh>Client</MudTh>
+                <MudTh>Total Amount</MudTh>
+                <MudTh>Status</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Invoice Number">@context.InvoiceNumber</MudTd>
+                <MudTd DataLabel="Creation Date">@context.CreationDate?.ToShortDateString()</MudTd>
+                <MudTd DataLabel="Client">@context.ContractorName</MudTd>
+                <MudTd DataLabel="Total Amount">@context.TotalGrossValue.ToString("C2", _culture)</MudTd>
+                <MudTd DataLabel="Status">
+                    @if (context.IsPaid)
+                    {
+                        <MudChip Color="Color.Success" Size="Size.Small">Paid</MudChip>
+                    }
+                    else if (context.PaymentDate < DateTime.Now)
+                    {
+                        <MudChip Color="Color.Error" Size="Size.Small">Overdue</MudChip>
+                    }
+                    else
+                    {
+                        <MudChip Color="Color.Warning" Size="Size.Small">Pending</MudChip>
+                    }
+                </MudTd>
+                <MudTd>
+                    <MudMenu Icon="@Icons.Material.Filled.MoreVert" AnchorOrigin="Origin.BottomRight">
+                        <MudMenuItem OnClick="@(() => ViewInvoice(context))">Edit</MudMenuItem>
+                        <MudMenuItem OnClick="@(() => PreviewInvoice(context))">Preview</MudMenuItem>
+                        <MudMenuItem OnClick="@(() => GeneratePdf(context))">Generate PDF</MudMenuItem>
+                    </MudMenu>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudPaper>
+}
+
+@if (_selectedInvoice != null)
+{
+    <MudPaper Class="pa-4" Elevation="3">
+        <EditForm Model="@_selectedInvoice" OnValidSubmit="UpdateInvoice" Context="editFormContext">
+            <DataAnnotationsValidator />
+            
+            <div class="d-flex justify-space-between align-center mb-4">
+                <MudText Typo="Typo.h5">Invoice Details</MudText>
+                <div>
+                    <MudButton OnClick="@(() => PreviewInvoice(_selectedInvoice))" 
+                              Variant="Variant.Outlined" Color="Color.Primary" Class="mx-2">
+                        Preview
+                    </MudButton>
+                    <MudButton OnClick="@(() => GeneratePdf(_selectedInvoice))" 
+                              Variant="Variant.Outlined" Color="Color.Primary" Class="mx-2">
+                        Generate PDF
+                    </MudButton>
+                    <MudButton ButtonType="ButtonType.Submit" 
+                              Variant="Variant.Filled" Color="Color.Primary" 
+                              Disabled="@_isProcessing">
+                        @if (_isProcessing)
+                        {
+                            <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" />
+                            <span>Saving...</span>
+                        }
+                        else
+                        {
+                            <span>Save Changes</span>
+                        }
+                    </MudButton>
+                </div>
+            </div>
+
+            <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-4">
+                <MudTabPanel Text="Basic Information">
+                    <MudGrid>
+                        <MudItem xs="12" md="6">
+                            <MudCard Class="mb-4">
+                                <MudCardHeader>
+                                    <MudText Typo="Typo.h6">Invoice Information</MudText>
+                                </MudCardHeader>
+                                <MudCardContent>
+                                    <div class="d-flex gap-4">
+                                        <MudTextField @bind-Value="_selectedInvoice.InvoiceNumber" Label="Invoice Number" 
+                                                    For="@(() => _selectedInvoice.InvoiceNumber)" ReadOnly="true" />
+                                        <MudDatePicker @bind-Date="_selectedInvoice.CreationDate" Label="Invoice Date" 
+                                                    For="@(() => _selectedInvoice.CreationDate)" Required="true" />
+                                    </div>
+                                    <div class="d-flex gap-4">
+                                        <MudDatePicker @bind-Date="_selectedInvoice.SellDate" Label="Sell Date" 
+                                                    For="@(() => _selectedInvoice.SellDate)" Required="true" />
+                                        <MudDatePicker @bind-Date="_selectedInvoice.PaymentDate" Label="Payment Due Date" 
+                                                    For="@(() => _selectedInvoice.PaymentDate)" Required="true" />
+                                    </div>
+                                    <MudTextField @bind-Value="_selectedInvoice.PaymentMethod" Label="Payment Method" 
+                                                For="@(() => _selectedInvoice.PaymentMethod)" Margin="Margin.Dense" />
+                                    
+                                    <div class="d-flex gap-4 mt-4">
+                                        <MudCheckBox @bind-Checked="_selectedInvoice.IsPaid" Label="Invoice Paid" 
+                                                  Color="Color.Primary" />
+                                        @if (_selectedInvoice.IsPaid)
+                                        {
+                                            <MudDatePicker @bind-Date="_selectedInvoice.PaidDate" Label="Paid Date" />
+                                        }
+                                    </div>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+                        
+                        <MudItem xs="12" md="6">
+                            <MudCard Class="mb-4">
+                                <MudCardHeader>
+                                    <MudText Typo="Typo.h6">Client Information</MudText>
+                                </MudCardHeader>
+                                <MudCardContent>
+                                    <MudTextField @bind-Value="_selectedInvoice.ContractorName" Label="Client Name" 
+                                                For="@(() => _selectedInvoice.ContractorName)" Required="true" />
+                                    <MudTextField @bind-Value="_selectedInvoice.ContractorAddress" Label="Address" 
+                                                For="@(() => _selectedInvoice.ContractorAddress)" Required="true" />
+                                    <div class="d-flex gap-4">
+                                        <MudTextField @bind-Value="_selectedInvoice.ContractorCity" Label="City" 
+                                                    For="@(() => _selectedInvoice.ContractorCity)" Required="true" />
+                                        <MudTextField @bind-Value="_selectedInvoice.ContractorZipCode" Label="Zip/Postal Code" 
+                                                    For="@(() => _selectedInvoice.ContractorZipCode)" Required="true" />
+                                    </div>
+                                    <MudTextField @bind-Value="_selectedInvoice.ContractorCountry" Label="Country" 
+                                                For="@(() => _selectedInvoice.ContractorCountry)" Required="true" />
+                                    <MudTextField @bind-Value="_selectedInvoice.ContractorTaxId" Label="VAT/Tax ID" 
+                                                For="@(() => _selectedInvoice.ContractorTaxId)" />
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+                    </MudGrid>
+                </MudTabPanel>
+                
+                <MudTabPanel Text="Invoice Items">
+                    <MudCard>
+                        <MudCardHeader>
+                            <div class="d-flex justify-space-between align-center w-100">
+                                <MudText Typo="Typo.h6">Invoice Items</MudText>
+                                <MudButton OnClick="AddNewItem" Variant="Variant.Filled" Color="Color.Primary" 
+                                         Size="Size.Small" StartIcon="@Icons.Material.Filled.Add">
+                                    Add Item
+                                </MudButton>
+                            </div>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            @if (_selectedInvoice.Items.Count == 0)
+                            {
+                                <MudAlert Severity="Severity.Info">No items added yet. Click "Add Item" to add your first item.</MudAlert>
+                            }
+                            else
+                            {
+                                <MudTable Items="@_selectedInvoice.Items" Dense="true" Hover="true" Class="mb-4">
+                                    <HeaderContent>
+                                        <MudTh>Description</MudTh>
+                                        <MudTh>Quantity</MudTh>
+                                        <MudTh>Unit</MudTh>
+                                        <MudTh>Unit Price</MudTh>
+                                        <MudTh>Tax Rate %</MudTh>
+                                        <MudTh>Net Value</MudTh>
+                                        <MudTh>Gross Value</MudTh>
+                                        <MudTh></MudTh>
+                                    </HeaderContent>
+                                    <RowTemplate Context="item">
+                                        <MudTd DataLabel="Description">
+                                            <MudTextField @bind-Value="item.Description" Required="true" />
+                                        </MudTd>
+                                        <MudTd DataLabel="Quantity">
+                                            <MudNumericField @bind-Value="item.Quantity" Min="0.001M"
+                                                         Format="N3" Required="true" OnBlur="CalculateTotals" />
+                                        </MudTd>
+                                        <MudTd DataLabel="Unit">
+                                            <MudTextField @bind-Value="item.Unit" Required="true" />
+                                        </MudTd>
+                                        <MudTd DataLabel="Unit Price">
+                                            <MudNumericField @bind-Value="item.UnitPrice" Min="0.01M" Culture="_culture"
+                                                         Format="C2" Required="true" OnBlur="CalculateTotals" />
+                                        </MudTd>
+                                        <MudTd DataLabel="Tax Rate">
+                                            <MudNumericField @bind-Value="item.TaxRate" Min="0" Max="100" Culture="_culture"
+                                                         Format="N2" Required="true" OnBlur="CalculateTotals" />
+                                        </MudTd>
+                                        <MudTd DataLabel="Net Value">
+                                            @item.NetValue.ToString("C2", _culture)
+                                        </MudTd>
+                                        <MudTd DataLabel="Gross Value">
+                                            @item.GrossValue.ToString("C2", _culture)
+                                        </MudTd>
+                                        <MudTd>
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" 
+                                                         OnClick="@(() => RemoveItem(item))" Size="Size.Small" />
+                                        </MudTd>
+                                    </RowTemplate>
+                                </MudTable>
+                                
+                                <MudSimpleTable Dense="true" Hover="true" Striped="true" Style="width: 300px; margin-left: auto;">
+                                    <tbody>
+                                        <tr>
+                                            <td>Total Net Value:</td>
+                                            <td class="text-right">@_selectedInvoice.TotalNetValue.ToString("C2", _culture)</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Total Tax Value:</td>
+                                            <td class="text-right">@_selectedInvoice.TotalTaxValue.ToString("C2", _culture)</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Total Gross Value:</td>
+                                            <td class="text-right font-weight-bold">@_selectedInvoice.TotalGrossValue.ToString("C2", _culture)</td>
+                                        </tr>
+                                    </tbody>
+                                </MudSimpleTable>
+                            }
+                            
+                            <MudTextField @bind-Value="_selectedInvoice.Notes" Label="Notes" Lines="3" 
+                                       For="@(() => _selectedInvoice.Notes)" Class="mt-4" />
+                        </MudCardContent>
+                    </MudCard>
+                </MudTabPanel>
+                
+                <MudTabPanel Text="Company Details">
+                    <MudCard>
+                        <MudCardHeader>
+                            <MudText Typo="Typo.h6">Company Information</MudText>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudGrid>
+                                <MudItem xs="12" md="6">
+                                    <MudTextField @bind-Value="_selectedInvoice.CompanyName" Label="Company Name" 
+                                                For="@(() => _selectedInvoice.CompanyName)" Required="true" />
+                                    <MudTextField @bind-Value="_selectedInvoice.CompanyAddress" Label="Address" 
+                                                For="@(() => _selectedInvoice.CompanyAddress)" Required="true" />
+                                    <div class="d-flex gap-4">
+                                        <MudTextField @bind-Value="_selectedInvoice.CompanyCity" Label="City" 
+                                                    For="@(() => _selectedInvoice.CompanyCity)" Required="true" />
+                                        <MudTextField @bind-Value="_selectedInvoice.CompanyZipCode" Label="Zip/Postal Code" 
+                                                    For="@(() => _selectedInvoice.CompanyZipCode)" Required="true" />
+                                    </div>
+                                    <MudTextField @bind-Value="_selectedInvoice.CompanyCountry" Label="Country" 
+                                                For="@(() => _selectedInvoice.CompanyCountry)" Required="true" />
+                                    <MudTextField @bind-Value="_selectedInvoice.CompanyTaxId" Label="VAT/Tax ID" 
+                                                For="@(() => _selectedInvoice.CompanyTaxId)" />
+                                </MudItem>
+                                
+                                <MudItem xs="12" md="6">
+                                    <MudTextField @bind-Value="_selectedInvoice.CompanyPhone" Label="Phone" 
+                                                For="@(() => _selectedInvoice.CompanyPhone)" />
+                                    <MudTextField @bind-Value="_selectedInvoice.CompanyEmail" Label="Email" 
+                                                For="@(() => _selectedInvoice.CompanyEmail)" />
+                                    <MudTextField @bind-Value="_selectedInvoice.BankName" Label="Bank Name" 
+                                                For="@(() => _selectedInvoice.BankName)" />
+                                    <MudTextField @bind-Value="_selectedInvoice.BankAccountNumber" Label="Account Number" 
+                                                For="@(() => _selectedInvoice.BankAccountNumber)" />
+                                    <MudTextField @bind-Value="_selectedInvoice.BankIban" Label="IBAN" 
+                                                For="@(() => _selectedInvoice.BankIban)" />
+                                    <MudTextField @bind-Value="_selectedInvoice.BankSwift" Label="SWIFT/BIC" 
+                                                For="@(() => _selectedInvoice.BankSwift)" />
+                                </MudItem>
+                            </MudGrid>
+                        </MudCardContent>
+                    </MudCard>
+                </MudTabPanel>
+            </MudTabs>
+        </EditForm>
+    </MudPaper>
+}
+
+@code {
+    private List<Invoice>? _invoices;
+    private Invoice? _selectedInvoice;
+    private string _searchString = "";
+    private bool _isProcessing;
+    private CultureInfo _culture => new ("pl-PL");
+    
+    private IEnumerable<Invoice> _filteredInvoices => _invoices?
+        .Where(i => string.IsNullOrWhiteSpace(_searchString) ||
+                   i.InvoiceNumber.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ||
+                   i.ContractorName.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+        .OrderByDescending(i => i.CreationDate)
+        .ToList() ?? new List<Invoice>();
+    
+    protected override void OnInitialized()
+    {
+        _invoices = InvoiceService.GetInvoices().ToList();
+    }
+    
+    private void OnRowClick(TableRowClickEventArgs<Invoice> args)
+    {
+        ViewInvoice(args.Item);
+    }
+    
+    private void ViewInvoice(Invoice invoice)
+    {
+        // Create a deep copy of the invoice
+        var json = System.Text.Json.JsonSerializer.Serialize(invoice);
+        _selectedInvoice = System.Text.Json.JsonSerializer.Deserialize<Invoice>(json);
+    }
+    
+    private void PreviewInvoice(Invoice invoice)
+    {
+        // Placeholder for preview functionality
+        Snackbar.Add("Preview functionality is not implemented yet", Severity.Info);
+    }
+    
+    private async Task GeneratePdf(Invoice invoice)
+    {
+        // Placeholder for PDF generation functionality
+        var path = await InvoiceService.GenerateInvoicePdfAsync(invoice.Id, $"{invoice.InvoiceNumber.Replace('/', '-')}.pdf");
+        
+        Snackbar.Add($"PDF generated at path : {path}", Severity.Success);
+    }
+    
+    private async Task UpdateInvoice()
+    {
+        if (_selectedInvoice == null) return;
+        
+        try
+        {
+            _isProcessing = true;
+            StateHasChanged();
+            
+            await InvoiceService.UpdateInvoiceAsync(_selectedInvoice);
+            
+            // Update the local list with the new data
+            _invoices = InvoiceService.GetInvoices().ToList();
+            
+            Snackbar.Add("Invoice updated successfully", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error updating invoice: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isProcessing = false;
+            StateHasChanged();
+        }
+    }
+    
+    private void AddNewItem()
+    {
+        if (_selectedInvoice == null) return;
+        
+        _selectedInvoice.Items.Add(new InvoiceItem { TaxRate = 23 }); // Default tax rate
+        CalculateTotals();
+    }
+    
+    private void RemoveItem(InvoiceItem item)
+    {
+        if (_selectedInvoice == null) return;
+        
+        _selectedInvoice.Items.Remove(item);
+        CalculateTotals();
+    }
+    
+    private void CalculateTotals()
+    {
+        if (_selectedInvoice == null) return;
+        
+        // foreach (var item in _selectedInvoice.Items)
+        // {
+        //     // These calculations should match the ones in InvoiceItem
+        //     item.NetValue = item.Quantity * item.UnitPrice;
+        //     item.TaxValue = item.NetValue * (item.TaxRate / 100);
+        //     item.GrossValue = item.NetValue + item.TaxValue;
+        // }
+        
+        _selectedInvoice.TotalNetValue = _selectedInvoice.Items.Sum(i => i.NetValue);
+        _selectedInvoice.TotalTaxValue = _selectedInvoice.Items.Sum(i => i.TaxValue);
+        _selectedInvoice.TotalGrossValue = _selectedInvoice.Items.Sum(i => i.GrossValue);
+        
+        StateHasChanged();
+    }
+}

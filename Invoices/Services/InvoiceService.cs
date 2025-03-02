@@ -7,11 +7,13 @@ public class InvoiceService
 {
     private readonly string _invoicesFilePath;
     private readonly InvoiceConfigurationService _configService;
+    private readonly IPdfService _pdfService;
     private List<Invoice> _invoices = new();
     
-    public InvoiceService(InvoiceConfigurationService configService)
+    public InvoiceService(InvoiceConfigurationService configService, IPdfService pdfService)
     {
         _configService = configService;
+        _pdfService = pdfService;
         var appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Invoices");
         Directory.CreateDirectory(appDataPath);
         
@@ -40,6 +42,21 @@ public class InvoiceService
         return invoice;
     }
     
+    public async Task<Invoice> UpdateInvoiceAsync(Invoice invoice)
+    {
+        // Calculate totals
+        CalculateInvoiceTotals(invoice);
+        
+        var index = _invoices.FindIndex(i => i.Id == invoice.Id);
+        if (index >= 0)
+        {
+            _invoices[index] = invoice;
+            await SaveInvoicesAsync();
+        }
+        
+        return invoice;
+    }
+    
     public async Task DeleteInvoiceAsync(Guid id)
     {
         var invoice = _invoices.FirstOrDefault(i => i.Id == id);
@@ -57,6 +74,7 @@ public class InvoiceService
         var invoice = new Invoice
         {
             // Copy company details from configuration
+            InvoiceNumber = GenerateInvoiceNumber(),
             CompanyName = config.CompanyName,
             CompanyAddress = config.CompanyAddress,
             CompanyCity = config.CompanyCity,
@@ -73,7 +91,7 @@ public class InvoiceService
             // Set default tax rate
             Items = new List<InvoiceItem>
             {
-                new() { TaxRate = config.DefaultTaxRate }
+                new() { TaxRate = config.DefaultTaxRate, Quantity = 0, UnitPrice = 0 }
             }
         };
         
@@ -116,5 +134,35 @@ public class InvoiceService
     {
         var json = JsonSerializer.Serialize(_invoices, new JsonSerializerOptions { WriteIndented = true });
         await File.WriteAllTextAsync(_invoicesFilePath, json);
+    }
+    
+    /// <summary>
+    /// Generates a PDF file from the invoice and saves it to the specified path
+    /// </summary>
+    /// <param name="invoiceId">The ID of the invoice to generate</param>
+    /// <param name="filePath">Path where to save the PDF file</param>
+    /// <returns>The absolute path to the saved file, or null if invoice not found</returns>
+    public async Task<string?> GenerateInvoicePdfAsync(Guid invoiceId, string filePath)
+    {
+        var invoice = GetInvoice(invoiceId);
+        if (invoice == null)
+            return null;
+            
+        return await _pdfService.GeneratePdfAsync(invoice, filePath);
+    }
+    
+    /// <summary>
+    /// Generates a PDF file for the invoice and opens it for preview
+    /// </summary>
+    /// <param name="invoiceId">The ID of the invoice to preview</param>
+    /// <returns>True if successful, false if invoice not found</returns>
+    public async Task<bool> PreviewInvoicePdfAsync(Guid invoiceId)
+    {
+        var invoice = GetInvoice(invoiceId);
+        if (invoice == null)
+            return false;
+            
+        await _pdfService.PreviewPdfAsync(invoice);
+        return true;
     }
 }

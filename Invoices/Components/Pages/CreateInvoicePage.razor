@@ -1,4 +1,5 @@
 @page "/"
+@using System.Globalization
 @inject InvoiceService InvoiceService
 @inject InvoiceConfigurationService ConfigService
 @inject ISnackbar Snackbar
@@ -6,7 +7,7 @@
 
 <MudText Typo="Typo.h4" Class="mb-4">Create New Invoice</MudText>
 
-<EditForm Model="@_invoice" OnValidSubmit="CreateInvoice">
+<EditForm Model="@_invoice" OnSubmit="CreateInvoice" novalidate="true">
     <DataAnnotationsValidator />
 
     <MudCard Class="mb-4">
@@ -38,32 +39,35 @@
         <MudCardContent>
             <MudSelect T="Guid?" Label="Select existing client" @bind-Value="_selectedContractorId" 
                       For="@(() => _selectedContractorId)" HelperText="Or fill in client details manually below"
-                      OnSelectedItemChanged="ContractorSelected">
-                <MudSelectItem T="Guid?" Value="@(null)">New client</MudSelectItem>
+                      SelectedValuesChanged="() => ContractorSelected(_selectedContractorId)">
+                <MudSelectItem T="Guid?" Value="@(null)">Create new client</MudSelectItem>
                 @foreach (var contractor in _contractors)
                 {
                     <MudSelectItem T="Guid?" Value="@contractor.Id">@contractor.Name</MudSelectItem>
                 }
             </MudSelect>
 
-            <MudTextField @bind-Value="_invoice.ContractorName" Label="Client Name" 
-                         For="@(() => _invoice.ContractorName)" Required="true" />
-            <MudTextField @bind-Value="_invoice.ContractorAddress" Label="Address" 
-                         For="@(() => _invoice.ContractorAddress)" Required="true" />
-            <div class="d-flex gap-4">
-                <MudTextField @bind-Value="_invoice.ContractorCity" Label="City" 
-                             For="@(() => _invoice.ContractorCity)" Required="true" />
-                <MudTextField @bind-Value="_invoice.ContractorZipCode" Label="Zip/Postal Code" 
-                             For="@(() => _invoice.ContractorZipCode)" Required="true" />
-            </div>
-            <MudTextField @bind-Value="_invoice.ContractorCountry" Label="Country" 
-                         For="@(() => _invoice.ContractorCountry)" Required="true" />
-            <MudTextField @bind-Value="_invoice.ContractorTaxId" Label="VAT/Tax ID" 
-                         For="@(() => _invoice.ContractorTaxId)" />
-            
-            <MudSwitch @bind-Value="_saveContractor" Label="Save client for future invoices" 
-                      Color="Color.Primary" Class="mt-4" 
-                      Disabled="@(_selectedContractorId != null)" />
+            @if (_isContractorFormVisible)
+            {
+                <MudTextField @bind-Value="_invoice.ContractorName" Label="Client Name" 
+                            For="@(() => _invoice.ContractorName)" Required="true" ReadOnly="@_isContractorReadOnly" />
+                <MudTextField @bind-Value="_invoice.ContractorAddress" Label="Address" 
+                            For="@(() => _invoice.ContractorAddress)" Required="true" ReadOnly="@_isContractorReadOnly" />
+                <div class="d-flex gap-4">
+                    <MudTextField @bind-Value="_invoice.ContractorCity" Label="City" 
+                                For="@(() => _invoice.ContractorCity)" Required="true" ReadOnly="@_isContractorReadOnly" />
+                    <MudTextField @bind-Value="_invoice.ContractorZipCode" Label="Zip/Postal Code" 
+                                For="@(() => _invoice.ContractorZipCode)" Required="true" ReadOnly="@_isContractorReadOnly" />
+                </div>
+                <MudTextField @bind-Value="_invoice.ContractorCountry" Label="Country" 
+                            For="@(() => _invoice.ContractorCountry)" Required="true" ReadOnly="@_isContractorReadOnly" />
+                <MudTextField @bind-Value="_invoice.ContractorTaxId" Label="VAT/Tax ID" 
+                            For="@(() => _invoice.ContractorTaxId)" ReadOnly="@_isContractorReadOnly" />
+                
+                <MudSwitch @bind-Value="_saveContractor" Label="Save client for future invoices" 
+                        Color="Color.Primary" Class="mt-4" 
+                        Disabled="@(_selectedContractorId != null)" />
+            }
         </MudCardContent>
     </MudCard>
 
@@ -97,28 +101,28 @@
                     </HeaderContent>
                     <RowTemplate Context="item">
                         <MudTd DataLabel="Description">
-                            <MudTextField @bind-Value="item.Description" Required="true" />
+                            <MudTextField @bind-Value="item.Description" Required="true"/>
                         </MudTd>
                         <MudTd DataLabel="Quantity">
-                            <MudNumericField @bind-Value="item.Quantity" Min="0.001" 
-                                           Format="N3" Required="true" OnBlur="CalculateTotals" />
+                            <MudNumericField @bind-Value="item.Quantity" Min="0.001M" Culture="_culture"
+                                           Format="N3" Required="true" OnBlur="CalculateTotals"/>
                         </MudTd>
                         <MudTd DataLabel="Unit">
                             <MudTextField @bind-Value="item.Unit" Required="true" />
                         </MudTd>
                         <MudTd DataLabel="Unit Price">
-                            <MudNumericField @bind-Value="item.UnitPrice" Min="0.01" 
-                                           Format="C2" Required="true" OnBlur="CalculateTotals" />
+                            <MudNumericField @bind-Value="item.UnitPrice" Min="0.01M" Culture="_culture" AdornmentIcon="@Icons.Material.Filled.AttachMoney"
+                                             Format="C2" Required="true" OnBlur="CalculateTotals"/>
                         </MudTd>
                         <MudTd DataLabel="Tax Rate">
                             <MudNumericField @bind-Value="item.TaxRate" Min="0" Max="100" 
-                                           Format="N2" Required="true" OnBlur="CalculateTotals" />
+                                           Format="N2" Required="true" OnBlur="CalculateTotals"/>
                         </MudTd>
-                        <MudTd DataLabel="Net Value">
-                            @item.NetValue.ToString("C2")
+                        <MudTd DataLabel="Net Value" AdornmentIcon="@Icons.Material.Filled.AttachMoney" Culture="_culture">
+                            @item.NetValue.ToString("C2", _culture)
                         </MudTd>
-                        <MudTd DataLabel="Gross Value">
-                            @item.GrossValue.ToString("C2")
+                        <MudTd DataLabel="Gross Value" AdornmentIcon="@Icons.Material.Filled.AttachMoney" Culture="_culture">
+                            @item.GrossValue.ToString("C2", _culture)
                         </MudTd>
                         <MudTd>
                             <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" 
@@ -142,15 +146,15 @@
                 <tbody>
                     <tr>
                         <td>Total Net Value:</td>
-                        <td class="text-right">@_invoice.TotalNetValue.ToString("C2")</td>
+                        <td class="text-right">@_invoice.TotalNetValue.ToString("C2", _culture)</td>
                     </tr>
                     <tr>
                         <td>Total Tax Value:</td>
-                        <td class="text-right">@_invoice.TotalTaxValue.ToString("C2")</td>
+                        <td class="text-right">@_invoice.TotalTaxValue.ToString("C2", _culture)</td>
                     </tr>
                     <tr>
                         <td>Total Gross Value:</td>
-                        <td class="text-right font-weight-bold">@_invoice.TotalGrossValue.ToString("C2")</td>
+                        <td class="text-right font-weight-bold">@_invoice.TotalGrossValue.ToString("C2", _culture)</td>
                     </tr>
                 </tbody>
             </MudSimpleTable>
@@ -163,8 +167,17 @@
             <MudButton OnClick="ShowPreview" Variant="Variant.Outlined" Color="Color.Primary" Class="mx-2">
                 Preview
             </MudButton>
-            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">
-                Create Invoice
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary"
+                      Disabled="@_isProcessing">
+                @if (_isProcessing)
+                {
+                    <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" />
+                    <span>Processing...</span>
+                }
+                else
+                {
+                    <span>Create Invoice</span>
+                }
             </MudButton>
         </div>
     </div>
@@ -175,6 +188,10 @@
     private List<Contractor> _contractors = new();
     private Guid? _selectedContractorId;
     private bool _saveContractor;
+    private bool _isContractorFormVisible = true;
+    private bool _isContractorReadOnly;
+    private bool _isProcessing;
+    private CultureInfo _culture => new ("pl-PL");
 
     protected override void OnInitialized()
     {
@@ -216,6 +233,10 @@
             _invoice.ContractorCountry = string.Empty;
             _invoice.ContractorTaxId = null;
             _invoice.ContractorId = null;
+            
+            // Show editable form
+            _isContractorFormVisible = true;
+            _isContractorReadOnly = false;
         }
         else
         {
@@ -230,46 +251,61 @@
                 _invoice.ContractorZipCode = contractor.ZipCode;
                 _invoice.ContractorCountry = contractor.Country;
                 _invoice.ContractorTaxId = contractor.TaxId;
+                
+                // Show readonly form
+                _isContractorFormVisible = true;
+                _isContractorReadOnly = true;
             }
         }
     }
 
     private async Task CreateInvoice()
     {
-        // Save new contractor if requested
-        if (_saveContractor && _selectedContractorId == null)
+        try
         {
-            var contractor = new Contractor
-            {
-                Name = _invoice.ContractorName,
-                Address = _invoice.ContractorAddress,
-                City = _invoice.ContractorCity,
-                ZipCode = _invoice.ContractorZipCode,
-                Country = _invoice.ContractorCountry,
-                TaxId = _invoice.ContractorTaxId
-            };
+            _isProcessing = true;
+            StateHasChanged();
             
-            await ConfigService.SaveContractorAsync(contractor);
-            _invoice.ContractorId = contractor.Id;
-            _contractors = ConfigService.GetContractors().ToList();
+            // Save new contractor if requested
+            if (_saveContractor && _selectedContractorId == null)
+            {
+                var contractor = new Contractor
+                {
+                    Name = _invoice.ContractorName,
+                    Address = _invoice.ContractorAddress,
+                    City = _invoice.ContractorCity,
+                    ZipCode = _invoice.ContractorZipCode,
+                    Country = _invoice.ContractorCountry,
+                    TaxId = _invoice.ContractorTaxId
+                };
+                
+                await ConfigService.SaveContractorAsync(contractor);
+                _invoice.ContractorId = contractor.Id;
+                _contractors = ConfigService.GetContractors().ToList();
+            }
+            
+            // Ensure we have at least one item
+            if (_invoice.Items.Count == 0)
+            {
+                Snackbar.Add("Please add at least one item to the invoice", Severity.Warning);
+                return;
+            }
+            
+            // Create the invoice
+            await InvoiceService.CreateInvoiceAsync(_invoice);
+            Snackbar.Add("Invoice created successfully", Severity.Success);
+            
+            // Reset the form for a new invoice
+            _invoice = InvoiceService.CreateNewInvoice();
+            _selectedContractorId = null;
+            _saveContractor = false;
+            CalculateTotals();
         }
-        
-        // Ensure we have at least one item
-        if (_invoice.Items.Count == 0)
+        finally
         {
-            Snackbar.Add("Please add at least one item to the invoice", Severity.Warning);
-            return;
+            _isProcessing = false;
+            StateHasChanged();
         }
-        
-        // Create the invoice
-        await InvoiceService.CreateInvoiceAsync(_invoice);
-        Snackbar.Add("Invoice created successfully", Severity.Success);
-        
-        // Reset the form for a new invoice
-        _invoice = InvoiceService.CreateNewInvoice();
-        _selectedContractorId = null;
-        _saveContractor = false;
-        CalculateTotals();
     }
 
     private void ResetForm()

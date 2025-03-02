@@ -60,7 +60,7 @@
                 <MudCard>
                     <MudCardContent>
                         <MudNumericField Label="Default Tax Rate (%)" @bind-Value="_configuration.DefaultTaxRate"
-                                        For="@(() => (int)_configuration.DefaultTaxRate)" Min="0" Max="100" />
+                                        For="@(() => _configuration.DefaultTaxRate)" T="decimal" Format="N2" Min="0" Max="100" />
                     </MudCardContent>
                     
                     <MudCardActions>
