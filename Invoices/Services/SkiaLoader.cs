@@ -1,5 +1,7 @@
 using System.Runtime.InteropServices;
-using Foundation;
+#if MACCATALYST
+    using Foundation;
+#endif
 
 namespace Invoices.Services;
 
