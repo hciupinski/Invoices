@@ -1,12 +1,8 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using Foundation;
 using Invoices.Models;
-using Microsoft.Extensions.DependencyInjection;
-using QuestPDF.Companion;
 using QuestPDF.Fluent;
 using QuestPDF.Infrastructure;
-using QuestPDF.Previewer;
 
 namespace Invoices.Services;
 

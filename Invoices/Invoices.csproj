@@ -59,8 +59,6 @@
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.0" />
         <PackageReference Include="MudBlazor" Version="6.16.0" />
         <PackageReference Include="QuestPDF" Version="2025.1.4" />
-        <PackageReference Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'" Include="SkiaSharp.NativeAssets.MacCatalyst" Version="3.116.1" />
-        <PackageReference Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'" Include="SkiaSharp.NativeAssets.Win32" Version="3.116.1" />
     </ItemGroup>
 
     <ItemGroup>

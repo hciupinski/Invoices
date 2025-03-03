@@ -2,10 +2,8 @@ using Microsoft.Extensions.Logging;
 using Invoices.Services;
 using MudBlazor;
 using MudBlazor.Services;
-using System.Diagnostics;
 using CommunityToolkit.Maui;
 using CommunityToolkit.Maui.Storage;
-using Foundation;
 
 namespace Invoices;
 
@@ -66,11 +64,6 @@ public static class MauiProgram
         builder.Logging.AddFilter("Microsoft", LogLevel.Warning);
         builder.Logging.AddFilter("System", LogLevel.Warning);
         builder.Logging.AddFilter("Invoices", LogLevel.Debug);
-
-        // Register a custom logger for file logging (optional)
-        var logsPath = new NSFileManager().GetUrls(NSSearchPathDirectory.ApplicationDirectory, NSSearchPathDomain.User)[0]
-            .Path;
-        builder.Services.AddLogging(logging => logging.AddProvider(new FileLoggerProvider(logsPath!)));
     }
 }
 
