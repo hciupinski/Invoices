@@ -7,12 +7,27 @@ static class SkiaLoader
 {
     public static void Load()
     {
+        string root;
+        string libPath;
+        
         if (OperatingSystem.IsMacCatalyst())
         {
-            var root = NSBundle.MainBundle.BundlePath;
-            var aa = Path.Combine(root, "Contents", "Resources");
-            var skiaLibPath = Path.Combine(aa, "Raw",  "libQuestPdfSkia.dylib");
-            NativeLibrary.Load(skiaLibPath);
+            root = NSBundle.MainBundle.BundlePath;
+            libPath = "libQuestPdfSkia.dylib";
         }
+        else if (OperatingSystem.IsWindows())
+        {
+            root = AppContext.BaseDirectory;
+            libPath = "QuestPdfSkia.dll";
+        }
+        else
+        {
+            throw new PlatformNotSupportedException();
+        }
+        
+        var resourcesDir = Path.Combine(root, "Contents", "Resources", "Raw");
+        var skiaLibPath = Path.Combine(resourcesDir, libPath);
+        NativeLibrary.Load(skiaLibPath);
     }
+
 }

@@ -1,5 +1,6 @@
 @page "/invoices"
 @using System.Globalization
+@using Invoices.Extensions
 @inject InvoiceService InvoiceService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
@@ -34,7 +35,7 @@ else
                 <MudTd DataLabel="Numer faktury">@context.InvoiceNumber</MudTd>
                 <MudTd DataLabel="Data utworzenia">@context.CreationDate?.ToShortDateString()</MudTd>
                 <MudTd DataLabel="Klient">@context.ContractorName</MudTd>
-                <MudTd DataLabel="Kwota">@context.TotalGrossValue.ToString("C2", _culture)</MudTd>
+                <MudTd DataLabel="Kwota">@context.TotalGrossValue.ToCurrencyString()</MudTd>
                 <MudTd DataLabel="Status">
                     @if (context.IsPaid)
                     {
@@ -46,7 +47,7 @@ else
                     }
                     else
                     {
-                        <MudChip Color="Color.Warning" Size="Size.Small">W trakcie</MudChip>
+                        <MudChip Color="Color.Warning" Size="Size.Small">Wysłane</MudChip>
                     }
                 </MudTd>
                 <MudTd>
@@ -119,7 +120,7 @@ else
                                                 For="@(() => _selectedInvoice.PaymentMethod)" Margin="Margin.Dense" />
                                     
                                     <div class="d-flex gap-4 mt-4">
-                                        <MudCheckBox @bind-Checked="_selectedInvoice.IsPaid" Label="Status faktury" 
+                                        <MudCheckBox @bind-Checked="_selectedInvoice.IsPaid" Label="Zapłacone??" 
                                                   Color="Color.Primary" />
                                         @if (_selectedInvoice.IsPaid)
                                         {
@@ -170,7 +171,7 @@ else
                         <MudCardContent>
                             @if (_selectedInvoice.Items.Count == 0)
                             {
-                                <MudAlert Severity="Severity.Info">Brak pozycji. Click "Add Item" to add your first item.</MudAlert>
+                                <MudAlert Severity="Severity.Info">Brak pozycji. Dodaj element używając 'Dodaj pozycję'.</MudAlert>
                             }
                             else
                             {
@@ -180,7 +181,7 @@ else
                                         <MudTh>Ilość</MudTh>
                                         <MudTh>Jednostka</MudTh>
                                         <MudTh>Cena jednostkowa</MudTh>
-                                        <MudTh>Stawka VAT %</MudTh>
+                                        <MudTh>Stawka VAT</MudTh>
                                         <MudTh>Kwota netto</MudTh>
                                         <MudTh>Kwota brutto</MudTh>
                                         <MudTh></MudTh>
@@ -205,10 +206,10 @@ else
                                                          Format="N2" Required="true" OnBlur="CalculateTotals" />
                                         </MudTd>
                                         <MudTd DataLabel="Kwota netto">
-                                            @item.NetValue.ToString("C2", _culture)
+                                            @item.NetValue.ToCurrencyString()
                                         </MudTd>
-                                        <MudTd DataLabel="Kwota brutton">
-                                            @item.GrossValue.ToString("C2", _culture)
+                                        <MudTd DataLabel="Kwota brutto">
+                                            @item.GrossValue.ToCurrencyString()
                                         </MudTd>
                                         <MudTd>
                                             <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" 
@@ -221,15 +222,15 @@ else
                                     <tbody>
                                         <tr>
                                             <td>Całkowita kwota netto:</td>
-                                            <td class="text-right">@_selectedInvoice.TotalNetValue.ToString("C2", _culture)</td>
+                                            <td class="text-right">@_selectedInvoice.TotalNetValue.ToCurrencyString()</td>
                                         </tr>
                                         <tr>
                                             <td>Całkowita kwota VAT:</td>
-                                            <td class="text-right">@_selectedInvoice.TotalTaxValue.ToString("C2", _culture)</td>
+                                            <td class="text-right">@_selectedInvoice.TotalTaxValue.ToCurrencyString()</td>
                                         </tr>
                                         <tr>
                                             <td>Całkowita kwota brutto:</td>
-                                            <td class="text-right font-weight-bold">@_selectedInvoice.TotalGrossValue.ToString("C2", _culture)</td>
+                                            <td class="text-right font-weight-bold">@_selectedInvoice.TotalGrossValue.ToCurrencyString()</td>
                                         </tr>
                                     </tbody>
                                 </MudSimpleTable>
@@ -274,10 +275,6 @@ else
                                                 For="@(() => _selectedInvoice.BankName)" />
                                     <MudTextField @bind-Value="_selectedInvoice.BankAccountNumber" Label="Numer konta" 
                                                 For="@(() => _selectedInvoice.BankAccountNumber)" />
-                                    <MudTextField @bind-Value="_selectedInvoice.BankIban" Label="IBAN" 
-                                                For="@(() => _selectedInvoice.BankIban)" />
-                                    <MudTextField @bind-Value="_selectedInvoice.BankSwift" Label="SWIFT/BIC" 
-                                                For="@(() => _selectedInvoice.BankSwift)" />
                                 </MudItem>
                             </MudGrid>
                         </MudCardContent>
@@ -319,18 +316,18 @@ else
         _selectedInvoice = System.Text.Json.JsonSerializer.Deserialize<Invoice>(json);
     }
     
-    private void PreviewInvoice(Invoice invoice)
+    private async Task PreviewInvoice(Invoice invoice)
     {
         // Placeholder for preview functionality
-        Snackbar.Add("Preview functionality is not implemented yet", Severity.Info);
+        await InvoiceService.PreviewInvoicePdfAsync(invoice.Id);
     }
     
     private async Task GeneratePdf(Invoice invoice)
     {
         // Placeholder for PDF generation functionality
-        var path = await InvoiceService.GenerateInvoicePdfAsync(invoice.Id, $"{invoice.InvoiceNumber.Replace('/', '-')}.pdf");
+        var path = await InvoiceService.GenerateInvoicePdfAsync(invoice.Id, $"{invoice.InvoiceNumber}.pdf");
         
-        Snackbar.Add($"PDF generated at path : {path}", Severity.Success);
+        Snackbar.Add($"PDF wygenerowany w ścieżce : {path}", Severity.Success);
     }
     
     private async Task UpdateInvoice()
@@ -347,11 +344,11 @@ else
             // Update the local list with the new data
             _invoices = InvoiceService.GetInvoices().ToList();
             
-            Snackbar.Add("Invoice updated successfully", Severity.Success);
+            Snackbar.Add("Faktura zaktualizowana pomyślnie.", Severity.Success);
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error updating invoice: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Błąd aktualizacji faktury: {ex.Message}", Severity.Error);
         }
         finally
         {
@@ -379,14 +376,6 @@ else
     private void CalculateTotals()
     {
         if (_selectedInvoice == null) return;
-        
-        // foreach (var item in _selectedInvoice.Items)
-        // {
-        //     // These calculations should match the ones in InvoiceItem
-        //     item.NetValue = item.Quantity * item.UnitPrice;
-        //     item.TaxValue = item.NetValue * (item.TaxRate / 100);
-        //     item.GrossValue = item.NetValue + item.TaxValue;
-        // }
         
         _selectedInvoice.TotalNetValue = _selectedInvoice.Items.Sum(i => i.NetValue);
         _selectedInvoice.TotalTaxValue = _selectedInvoice.Items.Sum(i => i.TaxValue);

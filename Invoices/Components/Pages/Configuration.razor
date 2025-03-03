@@ -243,7 +243,7 @@
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
                 // For macOS, we'll use a simple dialog approach
-                var folderPath = await ShowFolderDialogMacOSAsync();
+                var folderPath = await ShowFolderDialogMacOsAsync();
                 if (!string.IsNullOrEmpty(folderPath))
                 {
                     _configuration.InvoicesStoragePath = folderPath;
@@ -252,7 +252,7 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error selecting folder: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Błąd przy wyborze folderu: {ex.Message}", Severity.Error);
         }
     }
     
@@ -288,7 +288,7 @@
         return string.Empty; // Return empty if canceled
     }
     
-    private async Task<string> ShowFolderDialogMacOSAsync()
+    private async Task<string> ShowFolderDialogMacOsAsync()
     {
         // For macOS, we can use a dialog to ask the user for a path
         var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small };
@@ -308,7 +308,7 @@
             })
         };
     
-        var dialog = await DialogService.ShowAsync(typeof (Configuration), "Select Folder", parameters, options);
+        var dialog = await DialogService.ShowAsync(typeof (Configuration), "Wybierz folder", parameters, options);
         var result = await dialog.Result;
     
         if (!result.Canceled && result.Data is string selectedPath)
@@ -330,14 +330,14 @@
             ["IsNew"] = _isNewContractor
         };
         
-        var dialog = await DialogService.ShowAsync<ContractorDialog>("Add Contractor", parameters);
+        var dialog = await DialogService.ShowAsync<ContractorDialog>("Dodaj klienta", parameters);
         var result = await dialog.Result;
         
         if (!result.Canceled)
         {
             await ConfigService.SaveContractorAsync(_currentContractor);
             _contractors = ConfigService.GetContractors().ToList();
-            Snackbar.Add("Contractor added successfully", Severity.Success);
+            Snackbar.Add("Klient dodany!", Severity.Success);
         }
     }
 
@@ -364,29 +364,29 @@
             ["IsNew"] = _isNewContractor
         };
         
-        var dialog = await DialogService.ShowAsync<ContractorDialog>("Edit Contractor", parameters);
+        var dialog = await DialogService.ShowAsync<ContractorDialog>("Edytuj klienta", parameters);
         var result = await dialog.Result;
         
         if (!result.Canceled)
         {
             await ConfigService.SaveContractorAsync(_currentContractor);
             _contractors = ConfigService.GetContractors().ToList();
-            Snackbar.Add("Contractor updated successfully", Severity.Success);
+            Snackbar.Add("Dane klienta zaktualizowane", Severity.Success);
         }
     }
 
     private async Task DeleteContractor(Contractor contractor)
     {
         var confirmed = await DialogService.ShowMessageBox(
-            "Delete Contractor",
-            $"Are you sure you want to delete {contractor.Name}?",
-            "Yes", "No");
+            "Usun klienta",
+            $"Czy na pewno chcesz usunąć {contractor.Name}?",
+            "Tak", "Nie");
             
         if (confirmed == true)
         {
             await ConfigService.DeleteContractorAsync(contractor.Id);
             _contractors = ConfigService.GetContractors().ToList();
-            Snackbar.Add("Contractor deleted successfully", Severity.Success);
+            Snackbar.Add("Klient usunięty!", Severity.Success);
         }
     }
 }

@@ -78,7 +78,7 @@ public class Invoice
     public decimal TotalGrossValue { get; set; }
     
     // Payment information
-    public string? PaymentMethod { get; set; } = "Bank transfer";
+    public string? PaymentMethod { get; set; } = "Przelew";
     
     public string? Notes { get; set; }
     
