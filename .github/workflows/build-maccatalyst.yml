@@ -31,7 +31,7 @@ jobs:
         run: dotnet publish -f net9.0-maccatalyst -c Release -o ./publish
 
       - name: Upload MacCatalyst Build Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: MacCatalyst-App
           path: ./publish/*.app
