@@ -1,5 +1,6 @@
 @page "/"
 @using System.Globalization
+@using Invoices.Extensions
 @inject InvoiceService InvoiceService
 @inject InvoiceConfigurationService ConfigService
 @inject ISnackbar Snackbar
@@ -27,7 +28,7 @@
                 <MudDatePicker @bind-Date="_invoice.PaymentDate" Label="Termin płatności" 
                               For="@(() => _invoice.PaymentDate)" Required="true" />
             </div>
-            <MudTextField @bind-Value="_invoice.PaymentMethod" Label="Sposób płatności" 
+            <MudTextField @bind-Value="_invoice.PaymentMethod" Label="Metoda płatności" 
                          For="@(() => _invoice.PaymentMethod)" Margin="Margin.Dense" />
         </MudCardContent>
     </MudCard>
@@ -74,7 +75,7 @@
     <MudCard Class="mb-4">
         <MudCardHeader>
             <div class="d-flex justify-space-between align-center">
-                <MudText Typo="Typo.h6">Pozycja faktury</MudText>
+                <MudText Typo="Typo.h6">Pozycje faktury</MudText>
                 <MudButton OnClick="AddNewItem" Variant="Variant.Filled" Color="Color.Primary" 
                           Size="Size.Small" StartIcon="@Icons.Material.Filled.Add">
                     Dodaj pozycję
@@ -94,7 +95,7 @@
                         <MudTh>Ilość</MudTh>
                         <MudTh>Jednostka</MudTh>
                         <MudTh>Cena jednostkowa</MudTh>
-                        <MudTh>Stawka VAT %</MudTh>
+                        <MudTh>Stawka VAT</MudTh>
                         <MudTh>Kwota netto</MudTh>
                         <MudTh>Kwota brutto</MudTh>
                         <MudTh></MudTh>
@@ -104,8 +105,8 @@
                             <MudTextField @bind-Value="item.Description" Required="true"/>
                         </MudTd>
                         <MudTd DataLabel="Ilość">
-                            <MudNumericField @bind-Value="item.Quantity" Min="0.001M" Culture="_culture"
-                                           Format="N3" Required="true" OnBlur="CalculateTotals"/>
+                            <MudNumericField @bind-Value="item.Quantity" Min="0.01M" Culture="_culture"
+                                           Format="N2" Required="true" OnBlur="CalculateTotals"/>
                         </MudTd>
                         <MudTd DataLabel="Jednostka">
                             <MudTextField @bind-Value="item.Unit" Required="true" />
@@ -118,11 +119,11 @@
                             <MudNumericField @bind-Value="item.TaxRate" Min="0" Max="100" 
                                            Format="N2" Required="true" OnBlur="CalculateTotals"/>
                         </MudTd>
-                        <MudTd DataLabel="Kwota netto" AdornmentIcon="@Icons.Material.Filled.AttachMoney" Culture="_culture">
-                            @item.NetValue.ToString("C2", _culture)
+                        <MudTd DataLabel="Kwota netto" AdornmentIcon="@Icons.Material.Filled.AttachMoney">
+                            @item.NetValue.ToCurrencyString()
                         </MudTd>
-                        <MudTd DataLabel="Kwota brutto" AdornmentIcon="@Icons.Material.Filled.AttachMoney" Culture="_culture">
-                            @item.GrossValue.ToString("C2", _culture)
+                        <MudTd DataLabel="Kwota brutto" AdornmentIcon="@Icons.Material.Filled.AttachMoney">
+                            @item.GrossValue.ToCurrencyString()
                         </MudTd>
                         <MudTd>
                             <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" 
@@ -146,15 +147,15 @@
                 <tbody>
                     <tr>
                         <td>Całkowita kwota netto:</td>
-                        <td class="text-right">@_invoice.TotalNetValue.ToString("C2", _culture)</td>
+                        <td class="text-right">@_invoice.TotalNetValue.ToCurrencyString()</td>
                     </tr>
                     <tr>
                         <td>Całkowita stawka VAT:</td>
-                        <td class="text-right">@_invoice.TotalTaxValue.ToString("C2", _culture)</td>
+                        <td class="text-right">@_invoice.TotalTaxValue.ToCurrencyString()</td>
                     </tr>
                     <tr>
                         <td>Całkowita kwota brutto:</td>
-                        <td class="text-right font-weight-bold">@_invoice.TotalGrossValue.ToString("C2", _culture)</td>
+                        <td class="text-right font-weight-bold">@_invoice.TotalGrossValue.ToCurrencyString()</td>
                     </tr>
                 </tbody>
             </MudSimpleTable>
@@ -316,10 +317,8 @@
         CalculateTotals();
     }
 
-    private void ShowPreview()
+    private async Task ShowPreview()
     {
-        // This is a placeholder for the preview functionality
-        // It will be implemented later
-        Snackbar.Add("Preview functionality is not implemented yet", Severity.Info);
+        await InvoiceService.PreviewInvoicePdfAsync(_invoice.Id);
     }
 }

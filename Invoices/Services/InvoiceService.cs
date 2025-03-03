@@ -107,11 +107,11 @@ public class InvoiceService
     
     private string GenerateInvoiceNumber()
     {
-        // Format: INV/YYYYMMDD/XX where XX is a sequential number
-        var date = DateTime.Now.ToString("yyyyMMdd");
-        var dailyInvoices = _invoices.Count(i => i.InvoiceNumber.Contains(date));
+        // Format: INV-YYYYMM-XX where XX is a sequential number
+        var date = DateTime.Now.ToString("yyyyMM");
+        var monthlyInvoices = _invoices.Count(i => i.InvoiceNumber.Contains(date));
         
-        return $"INV/{date}/{(dailyInvoices + 1):D2}";
+        return $"INV-{date}-{(monthlyInvoices + 1):D2}";
     }
     
     private void LoadInvoices()

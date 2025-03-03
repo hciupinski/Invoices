@@ -3,8 +3,10 @@ using System.Runtime.InteropServices;
 using Foundation;
 using Invoices.Models;
 using Microsoft.Extensions.DependencyInjection;
+using QuestPDF.Companion;
 using QuestPDF.Fluent;
 using QuestPDF.Infrastructure;
+using QuestPDF.Previewer;
 
 namespace Invoices.Services;
 
@@ -106,7 +108,7 @@ public class PdfService : IPdfService
             {
                 Process.Start(new ProcessStartInfo(filePath) { UseShellExecute = true });
             }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) || RuntimeInformation.RuntimeIdentifier.Equals("maccatalyst-arm64", StringComparison.OrdinalIgnoreCase))
             {
                 Process.Start("open", filePath);
             }
