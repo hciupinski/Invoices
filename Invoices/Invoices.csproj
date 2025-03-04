@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
     <PropertyGroup>
-        <TargetFramework Condition="$([MSBuild]::IsOSPlatform('maccatalyst'))">net9.0-maccatalyst</TargetFramework>
+        <TargetFramework Condition="$([MSBuild]::IsOSPlatform('osx'))">net9.0-maccatalyst</TargetFramework>
         <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net9.0-windows10.0.19041.0</TargetFrameworks>
 
         <RuntimeIdentifiers Condition="$([MSBuild]::IsOSPlatform('maccatalyst'))">maccatalyst-x64;maccatalyst-arm64</RuntimeIdentifiers>
@@ -73,7 +73,7 @@
         <MauiAsset Include="Resources\Raw\QuestPdfSkia.dll">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </MauiAsset>
-        <None Include="Platforms\MacCatalyst\SkiaLoader.cs" />
+        <None Include="Platforms\MacCatalyst\MacSkiaLoader.cs" />
         <None Include="Platforms\Windows\SkiaLoader.cs" />
     </ItemGroup>
     

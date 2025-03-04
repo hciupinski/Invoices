@@ -3,7 +3,7 @@ using Foundation;
 
 namespace Invoices;
 
-static class SkiaLoader
+static class MacSkiaLoader
 {
     public static void Load()
     {
