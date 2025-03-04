@@ -120,7 +120,7 @@ else
                                                 For="@(() => _selectedInvoice.PaymentMethod)" Margin="Margin.Dense" />
                                     
                                     <div class="d-flex gap-4 mt-4">
-                                        <MudCheckBox @bind-Checked="_selectedInvoice.IsPaid" Label="Zapłacone??" 
+                                        <MudCheckBox @bind-Value="_selectedInvoice.IsPaid" Label="Zapłacone??" 
                                                   Color="Color.Primary" />
                                         @if (_selectedInvoice.IsPaid)
                                         {

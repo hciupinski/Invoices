@@ -2,10 +2,8 @@ using Microsoft.Extensions.Logging;
 using Invoices.Services;
 using MudBlazor;
 using MudBlazor.Services;
-using System.Diagnostics;
 using CommunityToolkit.Maui;
 using CommunityToolkit.Maui.Storage;
-using Foundation;
 
 namespace Invoices;
 
@@ -66,83 +64,5 @@ public static class MauiProgram
         builder.Logging.AddFilter("Microsoft", LogLevel.Warning);
         builder.Logging.AddFilter("System", LogLevel.Warning);
         builder.Logging.AddFilter("Invoices", LogLevel.Debug);
-
-        // Register a custom logger for file logging (optional)
-        var logsPath = new NSFileManager().GetUrls(NSSearchPathDirectory.ApplicationDirectory, NSSearchPathDomain.User)[0]
-            .Path;
-        builder.Services.AddLogging(logging => logging.AddProvider(new FileLoggerProvider(logsPath!)));
-    }
-}
-
-public class FileLoggerProvider : ILoggerProvider
-{
-    private readonly string _path;
-
-    public FileLoggerProvider(string path)
-    {
-        _path = path;
-        if (!Directory.Exists(path))
-        {
-            Directory.CreateDirectory(path);
-        }
-    }
-
-    public ILogger CreateLogger(string categoryName)
-    {
-        return new FileLogger(_path, categoryName);
-    }
-
-    public void Dispose()
-    {
-    }
-
-    private class FileLogger : ILogger
-    {
-        private readonly string _path;
-        private readonly string _categoryName;
-
-        public FileLogger(string path, string categoryName)
-        {
-            _path = path;
-            _categoryName = categoryName;
-        }
-
-        public IDisposable BeginScope<TState>(TState state) => null;
-
-        public bool IsEnabled(LogLevel logLevel) => true;
-
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception,
-            Func<TState, Exception, string> formatter)
-        {
-            if (!IsEnabled(logLevel)) return;
-
-            var logFile = Path.Combine(_path, $"log-{DateTime.Now:yyyy-MM-dd}.txt");
-            var message = formatter(state, exception);
-
-            try
-            {
-                File.AppendAllText(logFile,
-                    $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} [{logLevel}] {_categoryName}: {message}\n");
-
-                if (exception != null)
-                {
-                    File.AppendAllText(logFile, $"Exception: {exception.GetType().Name}\n");
-                    File.AppendAllText(logFile, $"Message: {exception.Message}\n");
-                    File.AppendAllText(logFile, $"Stack Trace: {exception.StackTrace}\n");
-
-                    if (exception.InnerException != null)
-                    {
-                        File.AppendAllText(logFile, $"Inner Exception: {exception.InnerException.GetType().Name}\n");
-                        File.AppendAllText(logFile, $"Inner Exception Message: {exception.InnerException.Message}\n");
-                        File.AppendAllText(logFile,
-                            $"Inner Exception Stack Trace: {exception.InnerException.StackTrace}\n");
-                    }
-                }
-            }
-            catch
-            {
-                // Fail silently if we can't write to the log file
-            }
-        }
     }
 }

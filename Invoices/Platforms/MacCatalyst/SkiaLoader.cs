@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using Foundation;
 
-namespace Invoices.Services;
+namespace Invoices;
 
 static class SkiaLoader
 {
@@ -14,11 +14,6 @@ static class SkiaLoader
         {
             root = NSBundle.MainBundle.BundlePath;
             libPath = "libQuestPdfSkia.dylib";
-        }
-        else if (OperatingSystem.IsWindows())
-        {
-            root = AppContext.BaseDirectory;
-            libPath = "QuestPdfSkia.dll";
         }
         else
         {

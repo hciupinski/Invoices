@@ -71,16 +71,9 @@ public partial class MainPage : ContentPage
         {
             Dispatcher.Dispatch(async void () =>
             {
-                try
-                {
-                    await DisplayAlert("Application Error", 
-                        "An error occurred. Please try again or contact support if the problem persists.", 
-                        "OK");
-                }
-                catch (Exception e)
-                {
-                    throw; // TODO handle exception
-                }
+                await DisplayAlert("Application Error",
+                    "An error occurred. Please try again or contact support if the problem persists.",
+                    "OK");
             });
         }
         catch
