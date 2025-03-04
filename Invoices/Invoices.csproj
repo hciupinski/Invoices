@@ -60,19 +60,17 @@
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.0" />
         <PackageReference Include="MudBlazor" Version="6.16.0" />
         <PackageReference Include="QuestPDF" Version="2025.1.4" />
-        <PackageReference Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'" Include="SkiaSharp.NativeAssets.MacCatalyst" Version="3.116.1" />
-        <PackageReference Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'" Include="SkiaSharp.NativeAssets.Win32" Version="3.116.1" />
-    </ItemGroup>
+     </ItemGroup>
 
     <ItemGroup>
-      <None Remove="Resources\Raw\libQuestPdfSkia.dylib" />
-      <MauiAsset Include="Resources\Raw\libQuestPdfSkia.dylib">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </MauiAsset>
+        <MauiAsset Include="Resources\Raw\libQuestPdfSkia.dylib">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </MauiAsset>
         <MauiAsset Include="Resources\Raw\QuestPdfSkia.dll">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </MauiAsset>
-      <None Include="Platforms\MacCatalyst\SkiaLoader.cs" />
+        <None Include="Platforms\MacCatalyst\SkiaLoader.cs" />
+        <None Include="Platforms\Windows\SkiaLoader.cs" />
     </ItemGroup>
-
+    
 </Project>
