@@ -31,8 +31,6 @@ public static class MauiProgram
             config.SnackbarConfiguration.ShowTransitionDuration = 500;
         });
 
-        SkiaLoader.Load();
-
         // Register app services
         builder.Services.AddSingleton<InvoiceConfigurationService>();
         builder.Services.AddSingleton<InvoiceService>();
