@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
     <PropertyGroup>
-        <TargetFramework>net9.0-maccatalyst</TargetFramework>
+        <TargetFramework Condition="$([MSBuild]::IsOSPlatform('maccatalyst'))">net9.0-maccatalyst</TargetFramework>
         <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net9.0-windows10.0.19041.0</TargetFrameworks>
 
         <RuntimeIdentifiers Condition="$([MSBuild]::IsOSPlatform('maccatalyst'))">maccatalyst-x64;maccatalyst-arm64</RuntimeIdentifiers>
@@ -27,6 +27,7 @@
 
         <!-- To develop, package, and publish an app to the Microsoft Store, see: https://aka.ms/MauiTemplateUnpackaged -->
         <WindowsPackageType>None</WindowsPackageType>
+        <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
         
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">15.0</SupportedOSPlatformVersion>
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
@@ -59,12 +60,8 @@
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.0" />
         <PackageReference Include="MudBlazor" Version="6.16.0" />
         <PackageReference Include="QuestPDF" Version="2025.1.4" />
-        <PackageReference Include="SkiaSharp.NativeAssets.MacCatalyst" Version="3.116.1" />
-        <PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="3.116.1" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Resources\NativeLibs\" />
+        <PackageReference Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'" Include="SkiaSharp.NativeAssets.MacCatalyst" Version="3.116.1" />
+        <PackageReference Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'" Include="SkiaSharp.NativeAssets.Win32" Version="3.116.1" />
     </ItemGroup>
 
     <ItemGroup>
@@ -72,6 +69,10 @@
       <MauiAsset Include="Resources\Raw\libQuestPdfSkia.dylib">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </MauiAsset>
+        <MauiAsset Include="Resources\Raw\QuestPdfSkia.dll">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </MauiAsset>
+      <None Include="Platforms\MacCatalyst\SkiaLoader.cs" />
     </ItemGroup>
 
 </Project>
